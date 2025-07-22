@@ -1,5 +1,7 @@
 package com.tblGroup.toBuyList.controllers;
 
+import com.tblGroup.toBuyList.dto.AmountDTO;
+import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
 import org.springframework.http.HttpStatus;
@@ -21,9 +23,9 @@ public class MoneyAccountController {
 	
 	
 	//	---------------------------------------------------------------------------------------------------------------------------------------
-//	---------------------MONEYaCCOUNTmANAGEMENT------------------------------------------------
+//	---------------------moneyAccountManagement------------------------------------------------
 	@PostMapping(path = "/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestBody MoneyAccount moneyAccount){
+	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestBody MoneyAccountDTO moneyAccount){
 		try {
 			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccount);
 			
@@ -33,8 +35,8 @@ public class MoneyAccountController {
 		}
 	}
 	
-	@GetMapping(path = "/read/{clientID}/{mAccountID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int clientID, @PathVariable int mAccountID){
+	@GetMapping(path = "/read/{mAccountID}", produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int mAccountID, @RequestParam int clientID){
 		try {
 			MoneyAccount moneyAccount = moneyAccountService.getAccountByID(clientID, mAccountID);
 			
@@ -46,17 +48,13 @@ public class MoneyAccountController {
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<MoneyAccount>>getAllAccount(@PathVariable int clientID){
-		try {
 			List<MoneyAccount>moneyAccountList = moneyAccountService.getAllAccounts(clientID);
 			
 			return new ResponseEntity<>(moneyAccountList, HttpStatus.OK);
-		}catch (IllegalArgumentException e){
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
 	}
 	
-	@PutMapping(path = "/update/{clientID}/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>updateAccount(@PathVariable int clientID, @PathVariable int mAccountID, @RequestBody MoneyAccount newMoneyAccount){
+	@PutMapping(path = "/update/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<MoneyAccount>updateAccount(@RequestParam int clientID, @PathVariable int mAccountID, @RequestBody MoneyAccountDTO newMoneyAccount){
 		try {
 			MoneyAccount moneyAccount = moneyAccountService.updateAccount(clientID, mAccountID, newMoneyAccount);
 			
@@ -74,32 +72,36 @@ public class MoneyAccountController {
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		}
 		
-		return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 	
 	
 	//	----------------------------------TRANSACTIONS MANAGEMENT----------------------------------------------------------
-	@PutMapping(path = "/deposit/{clientID}/{mAccountID}",
+	@PutMapping(path = "/deposit/{mAccountID}",
 		produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>makeDeposit(@PathVariable int clientID, @RequestParam double amount, @PathVariable int mAccountID){
+	public ResponseEntity<MoneyAccount>makeDeposit(@RequestParam int clientID, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amount, mAccountID);
+			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amountDTO, mAccountID);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
 	
-	@PutMapping(path = "/retrieve/{clientID}/{mAccountID}",
+	@PutMapping(path = "/retrieve/{mAccountID}",
 		produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>makeRetrieve(@PathVariable int clientID, @RequestParam double amount, @PathVariable int mAccountID){
+	public ResponseEntity<MoneyAccount>makeRetrieve(@RequestParam int clientID, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.makeRetrieve(clientID, amount, mAccountID);
+			MoneyAccount moneyAccount = moneyAccountService.makeRetrieve(clientID, amountDTO, mAccountID);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
 }

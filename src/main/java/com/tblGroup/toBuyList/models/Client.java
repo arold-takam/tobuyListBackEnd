@@ -9,7 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "client")
 public class Client {
-
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
@@ -20,7 +20,7 @@ public class Client {
 	@Column(name = "mail", nullable = false, unique = true)
 	private String mail;
 	
-	@Column(name = "password", nullable = false, unique = false)
+	@Column(name = "password", nullable = false)
 	private String password;
 	
 	@OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -36,7 +36,7 @@ public class Client {
 		this.password = password;
 		this.moneyAccountList = moneyAccountList;
 	}
-	
+
 //	------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
@@ -73,14 +73,5 @@ public class Client {
 	
 	public void setMoneyAccountList(List<MoneyAccount> moneyAccountList) {
 		this.moneyAccountList = moneyAccountList;
-	}
-	
-	public void addMoneyAccount(MoneyAccount moneyAccount){
-		this.moneyAccountList.add(moneyAccount);
-		moneyAccount.setClient(this);
-	}
-	
-	public void removeMoneyAccount(MoneyAccount moneyAccount){
-		this.moneyAccountList.remove(moneyAccount);
 	}
 }

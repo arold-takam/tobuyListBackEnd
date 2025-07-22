@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface MoneyAccountRepository extends JpaRepository<MoneyAccount, Integer> {
 
-	public MoneyAccount findByClient_IdAndId(int clientID, int mAccountID);
+	MoneyAccount findByClient_IdAndId(int clientID, int mAccountID);
 	
-	public List<MoneyAccount>findAllByClientId(int clientID);
+	List<MoneyAccount>findAllByClientId(int clientID);
 }

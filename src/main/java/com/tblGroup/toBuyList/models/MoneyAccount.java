@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "money_account")
 public class MoneyAccount {
-
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
@@ -23,6 +23,10 @@ public class MoneyAccount {
 	@Column(name = "amount")
 	private double amount;
 	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
@@ -37,7 +41,7 @@ public class MoneyAccount {
 		this.client = client;
 		this.amount = amount;
 	}
-	
+
 //	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
@@ -46,10 +50,6 @@ public class MoneyAccount {
 	
 	public String getName() {
 		return name;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
 	}
 	
 	public String getPhone() {

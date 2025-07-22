@@ -1,6 +1,7 @@
 package com.tblGroup.toBuyList.controllers;
 
 
+import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.ClientService;
@@ -55,26 +56,25 @@ public class ClientController {
 	}
 	
 	@PutMapping(path = "/update/{clientID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Client>updateClient(@PathVariable int clientID, @RequestBody Client newClient){
+	public ResponseEntity<Client>updateClient(@PathVariable int clientID, @RequestBody ClientDTO newClient){
 		try {
 			Client updatedClient = clientService.updateClient(clientID, newClient);
 			
 			return  new ResponseEntity<>(updatedClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}catch (Exception e){
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
 	
 	@DeleteMapping(path = "/delete/{clientID}")
 	public ResponseEntity<Void>deleteClient(@PathVariable int clientID){
 		try {
-			boolean delete = clientService.deleteClient(clientID);
+			clientService.deleteClient(clientID);
 			
-			if (delete){
-				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-			}else {
-				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-			}
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+			
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}

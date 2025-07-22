@@ -1,8 +1,8 @@
 package com.tblGroup.toBuyList.services;
 
 
+import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.Client;
-import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +28,7 @@ public class ClientService {
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 		
 		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client not found wtih ID: "+id);
+			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
 		}
 		
 		return optionalClient.get();
@@ -38,7 +38,7 @@ public class ClientService {
 		return clientRepository.findAll();
 	}
 	
-	public Client updateClient(int id, Client newClient){
+	public Client updateClient(int id, ClientDTO newClient) throws Exception {
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 		
 		if (optionalClient.isEmpty()){
@@ -48,21 +48,21 @@ public class ClientService {
 		Client existingClient = optionalClient.get();
 		
 		if (newClient != null){
-			existingClient.setName(newClient.getName());
-			existingClient.setMail(newClient.getMail());
-			existingClient.setPassword(newClient.getPassword());
+			existingClient.setName(newClient.name());
+			existingClient.setMail(newClient.mail());
+			existingClient.setPassword(newClient.password());
 			
 			return clientRepository.save(existingClient);
 		}
 		
-		throw new IllegalArgumentException("Invalid client info, try gain.");
+		throw  new Exception("Invalid client info, try gain.");
 	}
 	
 	public boolean deleteClient(int id){
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 		
 		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client not found wtih ID: "+id);
+			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
 		}
 		
 		clientRepository.deleteById(id);
