@@ -30,7 +30,7 @@ public class Client {
 	public Client() {
 	}
 	
-	public Client(String name, String mail, String password) {
+	public Client(String name, String mail, String password, List<MoneyAccount>moneyAccountList) {
 		this.name = name;
 		this.mail = mail;
 		this.password = password;

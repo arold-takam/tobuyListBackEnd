@@ -15,8 +15,8 @@ import java.util.Optional;
 
 @Service
 public class MoneyAccountService {
-	private MoneyAccountRepository moneyAccountRepository;
-	private ClientRepository clientRepository;
+	private final MoneyAccountRepository moneyAccountRepository;
+	private final ClientRepository clientRepository;
 
 	public MoneyAccountService(MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository) {
 		this.moneyAccountRepository = moneyAccountRepository;
@@ -28,16 +28,22 @@ public class MoneyAccountService {
 //	---------------------MoneyAccountManagement------------------------------------------------
 	public MoneyAccount createAccount(int clientID, MoneyAccountDTO moneyAccount){
 		Optional<Client>optionalClient= clientRepository.findById(clientID);
-		
+
+
 		if (optionalClient.isEmpty()){
 			throw new IllegalArgumentException("Client with this id not found");
 		}
-		
+
+		Client client = optionalClient.get();
 		MoneyAccount moneyAccountAdded = new MoneyAccount();
 		moneyAccountAdded.setName(moneyAccount.name());
 		moneyAccountAdded.setPhone(moneyAccount.phone());
 		moneyAccountAdded.setPassword(moneyAccount.password());
-		
+		moneyAccountAdded.setClient(client);
+
+		client.getMoneyAccountList().add(moneyAccountAdded);
+
+		clientRepository.save(client);
 		return moneyAccountRepository.save(moneyAccountAdded);
 	}
 	
@@ -59,8 +65,7 @@ public class MoneyAccountService {
 			if (optionalClient.isEmpty()){
 				throw new IllegalArgumentException("Client with the ID: "+clientID+" not found.");
 			}
-			
-			Client clientSaved = optionalClient.get();
+
 			
 			List<MoneyAccount>moneyAccountList = moneyAccountRepository.findAllByClientId(clientID);
 			
