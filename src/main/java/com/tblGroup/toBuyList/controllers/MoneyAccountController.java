@@ -2,6 +2,7 @@ package com.tblGroup.toBuyList.controllers;
 
 import com.tblGroup.toBuyList.dto.AmountDTO;
 import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
+import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
 import org.springframework.http.HttpStatus;
@@ -35,8 +36,8 @@ public class MoneyAccountController {
 		}
 	}
 	
-	@GetMapping(path = "/read/{mAccountID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int mAccountID, @RequestParam int clientID){
+	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
 		try {
 			MoneyAccount moneyAccount = moneyAccountService.getAccountByID(clientID, mAccountID);
 			
@@ -48,15 +49,15 @@ public class MoneyAccountController {
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<MoneyAccount>>getAllAccount(@PathVariable int clientID){
-			List<MoneyAccount>moneyAccountList = moneyAccountService.getAllAccounts(clientID);
+			List<MoneyAccount> moneyAccountList = moneyAccountService.getAllAccounts(clientID);
 			
 			return new ResponseEntity<>(moneyAccountList, HttpStatus.OK);
 	}
 	
 	@PutMapping(path = "/update/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>updateAccount(@RequestParam int clientID, @PathVariable int mAccountID, @RequestBody MoneyAccountDTO newMoneyAccount){
+	public ResponseEntity<MoneyAccount>updateAccount(@RequestParam int clientID, @PathVariable int mAccountID, @RequestBody PasswordDTO password){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.updateAccount(clientID, mAccountID, newMoneyAccount);
+			MoneyAccount moneyAccount = moneyAccountService.updateAccount(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){

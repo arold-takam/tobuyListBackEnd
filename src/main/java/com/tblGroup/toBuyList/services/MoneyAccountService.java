@@ -3,6 +3,7 @@ package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.AmountDTO;
 import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
+import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
@@ -41,9 +42,7 @@ public class MoneyAccountService {
 		moneyAccountAdded.setPassword(moneyAccount.password());
 		moneyAccountAdded.setClient(client);
 
-		client.getMoneyAccountList().add(moneyAccountAdded);
 
-		clientRepository.save(client);
 		return moneyAccountRepository.save(moneyAccountAdded);
 	}
 	
@@ -66,17 +65,11 @@ public class MoneyAccountService {
 				throw new IllegalArgumentException("Client with the ID: "+clientID+" not found.");
 			}
 
-			
-			List<MoneyAccount>moneyAccountList = moneyAccountRepository.findAllByClientId(clientID);
-			
-			for (MoneyAccount ma: moneyAccountList){
-				Hibernate.initialize(ma.getClient());
-			}
-			
-			return moneyAccountList;
+
+        return moneyAccountRepository.findAllByClientId(clientID);
 		}
 		
-	public MoneyAccount updateAccount(int clientID, int mAccountID,  MoneyAccountDTO newMoneyAccount){
+	public MoneyAccount updateAccount(int clientID, int mAccountID,  PasswordDTO passwordDTO){
 			Optional<Client>optionalClient = clientRepository.findById(clientID);
 			
 			if (optionalClient.isEmpty()){
@@ -86,7 +79,7 @@ public class MoneyAccountService {
 			MoneyAccount moneyAccountFound = moneyAccountRepository.findByClient_IdAndId(clientID, mAccountID);
 			
 			if (moneyAccountFound != null){
-				moneyAccountFound.setPassword(newMoneyAccount.password());
+				moneyAccountFound.setPassword(passwordDTO.password());
 				
 				moneyAccountRepository.save(moneyAccountFound);
 				
