@@ -10,26 +10,27 @@ import java.util.Date;
 public class Transfer {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    private int Id;
+    private int id;
 
-    @Column(name="amount")
+    @Column(name="amount" , nullable = false)
     private double amount;
 
     @Column(name="description")
     private String description;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="money_account_id")
     private MoneyAccount receiverAccount;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "wallet_receiver_id")
     private Wallet walletReceiver;
 
-    @Column(name="date")
+    @Column(name="date_transfer")
     private Date dateTransfer;
 
-    @Column(name="type_Transfer")
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name="type_transfer")
     private TypeTransfer typeTransfer;
 
     public Transfer(double amount, String description, MoneyAccount receiverAccount, Wallet walletReceiver, Date dateTransfer, TypeTransfer typeTransfer) {
@@ -45,13 +46,12 @@ public class Transfer {
 
     }
 
-
     public int getId() {
-        return Id;
+        return id;
     }
 
     public void setId(int id) {
-        Id = id;
+        this.id = id;
     }
 
     public double getAmount() {

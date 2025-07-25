@@ -48,7 +48,7 @@ public class DepositSercives {
 			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
 		}
 		
-		Wallet wallet = new Wallet(0.0);
+		Wallet wallet = new Wallet( );
 		
 		client.setWallet(wallet);
 		clientRepository.save(client);

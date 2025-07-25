@@ -1,12 +1,16 @@
 package com.tblGroup.toBuyList.services;
 
+import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.models.Transfer;
+import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
 import com.tblGroup.toBuyList.repositories.MoneyAccountRepository;
 import com.tblGroup.toBuyList.repositories.TransferRepository;
 import com.tblGroup.toBuyList.repositories.WalletRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 
 @Service
 public class TransferService {
@@ -22,10 +26,42 @@ public class TransferService {
         this.walletRepository = walletRepository;
     }
 
-    public Transfer makeATransfer(int clientId, int MoneyAccountId ) throws Exception{
-        MoneyAccount moneyAccount = moneyAccountRepository.findById(MoneyAccountId).orElseThrow(()-> new Exception("Account not found"));
-        return null;
+    public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO) throws Exception{
+
+        Wallet wallet = walletRepository.findByClient_Id(clientId);
+        MoneyAccount receiverAccount = moneyAccountRepository.findByPhone(transferDTO.phone());
+
+       if(transferDTO.amount() <=0 || transferDTO.amount() > wallet.getAmount()){
+             throw new Exception("amount is incorrect");
+        }
+
+        if(receiverAccount != null){
+
+            Transfer transfer = new Transfer();
+            transfer.setAmount(transferDTO.amount());
+            transfer.setDescription(transferDTO.description());
+            transfer.setReceiverAccount(receiverAccount);
+            transfer.setWalletReceiver(null);
+            transfer.setDateTransfer(new Date(System.currentTimeMillis()));
+            transfer.setTypeTransfer(transferDTO.typeTransfer());
+
+            receiverAccount.setAmount(receiverAccount.getAmount() + transferDTO.amount());
+            wallet.setAmount(wallet.getAmount() - transferDTO.amount());
+
+            walletRepository.save(wallet);
+            moneyAccountRepository.save(receiverAccount);
+            transferRepository.save(transfer);
+        }else{
+            throw new IllegalArgumentException("Account not found");
+        }
+
+
     }
+
+    public void makeATransferToAWallet(int clientId, TransferDTO transfer){
+
+    }
+
 
 
 }

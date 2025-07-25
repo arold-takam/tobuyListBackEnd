@@ -12,8 +12,8 @@ public interface MoneyAccountRepository extends JpaRepository<MoneyAccount, Inte
 
 	MoneyAccount findByClient_IdAndId(int clientID, int mAccountID);
 	
-	MoneyAccount findByPhone(String phone);
-	
 	List<MoneyAccount>findAllByClientId(int clientID);
+
+    MoneyAccount findByPhone(String phone);
 	
 }
