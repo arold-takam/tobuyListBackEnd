@@ -13,7 +13,6 @@ public class Wallet {
     @Column(name="amount")
     private double amount;
 
-
     public Wallet(double amount) {
         this.amount = amount;
     }
