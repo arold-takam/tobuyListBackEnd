@@ -16,7 +16,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/moneyAccount")
 public class MoneyAccountController {
-	private MoneyAccountService moneyAccountService;
+	private final MoneyAccountService moneyAccountService;
 	
 	public MoneyAccountController(MoneyAccountService moneyAccountService) {
 		this.moneyAccountService = moneyAccountService;

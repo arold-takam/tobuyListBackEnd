@@ -17,7 +17,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/client")
 public class ClientController {
-	private ClientService clientService;
+	private final ClientService clientService;
 	
 	public ClientController(ClientService clientService) {
 		this.clientService = clientService;
