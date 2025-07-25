@@ -1,6 +1,7 @@
 package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.TransferDTO;
+import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.models.Transfer;
 import com.tblGroup.toBuyList.models.Wallet;
@@ -11,6 +12,7 @@ import com.tblGroup.toBuyList.repositories.WalletRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class TransferService {
@@ -27,8 +29,10 @@ public class TransferService {
     }
 
     public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO) throws Exception{
-
-        Wallet wallet = walletRepository.findByClient_Id(clientId);
+        
+        Client client = clientRepository.findById(clientId).orElseThrow(()-> new IllegalArgumentException("\"Client not found at the ID: \"+clientId"));
+        
+        Wallet wallet = client.getWallet();
         MoneyAccount receiverAccount = moneyAccountRepository.findByPhone(transferDTO.phone());
 
        if(transferDTO.amount() <=0 || transferDTO.amount() > wallet.getAmount()){
@@ -61,7 +65,5 @@ public class TransferService {
     public void makeATransferToAWallet(int clientId, TransferDTO transfer){
 
     }
-
-
 
 }

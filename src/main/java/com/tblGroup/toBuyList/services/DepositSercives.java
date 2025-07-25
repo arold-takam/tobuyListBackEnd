@@ -34,67 +34,6 @@ public class DepositSercives {
 		this.moneyAccountRepository = moneyAccountRepository;
 	}
 	
-//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
-	public Wallet createWallet(int clientID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
-		}
-		
-		Client client = optionalClient.get();
-		
-		if ( client.getWallet() != null){
-			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
-		}
-		
-		Wallet wallet = new Wallet( );
-		
-		client.setWallet(wallet);
-		clientRepository.save(client);
-		
-		return wallet;
-	}
-	
-	public Wallet getWallet(int clientID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
-		}
-		
-		Client client = optionalClient.get();
-		
-		if ( client.getWallet() == null){
-			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
-		}
-		
-		return client.getWallet();
-	}
-	
-	public boolean deleteWallet(int clientID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
-		}
-		
-		Client client = optionalClient.get();
-		
-		if (client.getWallet() == null){
-			throw new IllegalArgumentException(client.getName()+" has no wallet yet, you can create him right now and easy !");
-		}
-		
-		Wallet wallet = client.getWallet();
-		
-		client.setWallet(null);
-		clientRepository.save(client);
-		
-		walletRepository.delete(wallet);
-		
-		return true;
-	}
-	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
 	public Deposit makeDeposit(int clientID, String phoneMAccount, DepositeDTO depositeDTO){

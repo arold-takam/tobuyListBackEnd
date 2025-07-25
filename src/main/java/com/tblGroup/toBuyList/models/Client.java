@@ -23,7 +23,7 @@ public class Client {
 	@Column(name = "password", nullable = false)
 	private String password;
 	
-	@OneToOne(cascade = CascadeType.ALL)
+	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	@JoinColumn(name = "wallet_id", referencedColumnName = "id")
 	private Wallet wallet;
 	

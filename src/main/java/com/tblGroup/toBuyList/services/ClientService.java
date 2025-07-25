@@ -2,6 +2,8 @@ package com.tblGroup.toBuyList.services;
 
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
+import com.tblGroup.toBuyList.dto.ClientResponseDTO;
+import com.tblGroup.toBuyList.dto.WalletResponseDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
@@ -25,14 +27,35 @@ public class ClientService {
 	
 //	------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
-	public Client createClient(Client client){
+	public ClientResponseDTO createClient(ClientDTO clientDTO){
+		Client client = new Client();
+		
+		client.setName(clientDTO.name());
+		client.setMail(clientDTO.mail());
+		client.setPassword(clientDTO.password());
+		
 		Wallet wallet = new Wallet();
-		Client clientSaved = clientRepository.save(client);
-		wallet.setClient(clientSaved);
-		wallet.setAmount(500.00);
+		wallet.setAmount(0.0);
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
-		walletRepository.save(wallet);
-		return clientSaved;
+		
+		client.setWallet(wallet);
+		wallet.setClient(client);
+		
+		Client clientSaved = clientRepository.save(client);
+		
+		WalletResponseDTO walletResponseDTO = new WalletResponseDTO(
+			clientSaved.getWallet().getId(),
+			clientSaved.getWallet().getAmount(),
+			clientSaved.getWallet().getWalletNumber()
+		);
+		
+		return new ClientResponseDTO(
+			clientSaved.getId(),
+			clientSaved.getName(),
+			clientSaved.getMail(),
+			clientSaved.getPassword(),
+			walletResponseDTO
+		);
 	}
 	
 	public Client getClientById(int id){
@@ -71,24 +94,43 @@ public class ClientService {
 	
 	public void deleteClient(int id){
 		Optional<Client>optionalClient =  clientRepository.findById(id);
-		Wallet wallet = walletRepository.findByClient_Id(id);
 		if (optionalClient.isEmpty()){
 			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
 		}
+		
+		Wallet wallet = optionalClient.get().getWallet();
 
 		walletRepository.deleteById(wallet.getId());
 		clientRepository.deleteById(id);
 
 	}
-
+	
 	private String autoGenerateAWalletNumber(){
 		String walletNumber;
 		do {
 			walletNumber = String.format("%06d", new Random().nextInt(1000000));
+			System.out.println("Generated Wallet Number: '" + walletNumber + "' (Length: " + walletNumber.length() + ")");
 		} while (walletRepository.existsByWalletNumber(walletNumber));
-
-			return walletNumber;
+		
+		return walletNumber;
+	}
+	
+	//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
+	
+	public Wallet getWallet(int clientID){
+		Optional<Client>optionalClient = clientRepository.findById(clientID);
+		
+		if (optionalClient.isEmpty()){
+			throw new IllegalArgumentException("No client found at the ID: "+clientID);
 		}
-
-
+		
+		Client client = optionalClient.get();
+		
+		if ( client.getWallet() == null){
+			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
+		}
+		
+		return client.getWallet();
+	}
+		
 }
