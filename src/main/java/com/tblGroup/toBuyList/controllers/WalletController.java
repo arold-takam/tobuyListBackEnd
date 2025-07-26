@@ -1,10 +1,10 @@
 package com.tblGroup.toBuyList.controllers;
 
-import com.tblGroup.toBuyList.dto.DepositeDTO;
+import com.tblGroup.toBuyList.dto.DepositDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.Deposit;
-import com.tblGroup.toBuyList.services.DepositSercives;
+import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.TransferService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +18,16 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping("/wallet")
 public class WalletController {
     private final TransferService transferService;
-    private final DepositSercives depositSercives;
+    private final DepositService depositService;
 
-    public WalletController(TransferService transferService, DepositSercives depositSercives) {
+    public WalletController(TransferService transferService, DepositService depositService) {
         this.transferService = transferService;
-        this.depositSercives = depositSercives;
+        this.depositService = depositService;
     }
 
 
 
-//    TRANSFERT MANAGEMENT--------------------------------------------------------------------------------------------------------------------------
+//    TRANSFER MANAGEMENT--------------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/transferToAccount/{clientId}")
     public ResponseEntity<?> MakeATransferToAnAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer) {
@@ -61,12 +61,14 @@ public class WalletController {
 
     //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
     @PostMapping(path = "/deposit/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<?>create(@PathVariable int clientID,  @RequestBody DepositeDTO depositeDTO){
+    public ResponseEntity<?>create(@PathVariable int clientID,  @RequestBody DepositDTO depositDTO){
         try {
-            depositSercives.makeDeposit(clientID, depositeDTO);
+            depositService.makeDeposit(clientID, depositDTO);
 
             return new ResponseEntity<>( HttpStatus.OK);
         }catch (IllegalArgumentException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -74,7 +76,7 @@ public class WalletController {
     @GetMapping(path = "/deposit/get/{clientID}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Deposit>get(@PathVariable int clientID, @RequestParam int depositID){
         try {
-            Deposit deposit = depositSercives.getDeposit(clientID, depositID);
+            Deposit deposit = depositService.getDeposit(clientID, depositID);
 
             return new ResponseEntity<>(deposit, HttpStatus.OK);
         }catch (IllegalArgumentException e){
@@ -87,7 +89,7 @@ public class WalletController {
     @GetMapping(path = "/deposit/get/all/{clientID}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Deposit>>get(@PathVariable int clientID){
         try {
-            List<Deposit> depositList = depositSercives.getAllDeposit(clientID);
+            List<Deposit> depositList = depositService.getAllDeposit(clientID);
 
             return new ResponseEntity<>(depositList, HttpStatus.OK);
         }catch (IllegalArgumentException e){

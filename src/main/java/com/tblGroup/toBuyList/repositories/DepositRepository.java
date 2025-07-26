@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DepositeRepository extends JpaRepository<Deposit, Integer> {
+public interface DepositRepository extends JpaRepository<Deposit, Integer> {
 	
 	Deposit findByClient_IdAndId(int clientID, int depositID);
 	

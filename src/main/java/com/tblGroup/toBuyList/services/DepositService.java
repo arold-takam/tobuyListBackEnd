@@ -1,12 +1,12 @@
 package com.tblGroup.toBuyList.services;
 
-import com.tblGroup.toBuyList.dto.DepositeDTO;
+import com.tblGroup.toBuyList.dto.DepositDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.Deposit;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
-import com.tblGroup.toBuyList.repositories.DepositeRepository;
+import com.tblGroup.toBuyList.repositories.DepositRepository;
 import com.tblGroup.toBuyList.repositories.MoneyAccountRepository;
 import com.tblGroup.toBuyList.repositories.WalletRepository;
 import jakarta.transaction.Transactional;
@@ -18,25 +18,24 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class DepositSercives {
-	private final DepositeRepository depositeRepository;
+public class DepositService {
+	private final DepositRepository depositRepository;
 	private final ClientRepository clientRepository;
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
-	private final MoneyAccountService moneyAccountService;
+
 	
 	
-	public DepositSercives(ClientRepository clientRepository, WalletRepository walletRepository, MoneyAccountService moneyAccountService, DepositeRepository depositeRepository, MoneyAccountRepository moneyAccountRepository) {
+	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository) {
 		this.clientRepository = clientRepository;
 		this.walletRepository = walletRepository;
-		this.moneyAccountService = moneyAccountService;
-		this.depositeRepository = depositeRepository;
+		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 	}
 	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
-	public void makeDeposit(int clientID, DepositeDTO depositeDTO){
+	public void makeDeposit(int clientID, DepositDTO depositDTO) throws Exception {
 		Optional<Client>optionalClient = clientRepository.findById(clientID);
 		
 		if (optionalClient.isEmpty()){
@@ -47,37 +46,37 @@ public class DepositSercives {
 		
 		Wallet clientWallet = client.getWallet();
 		
-		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositeDTO.phoneMAccount());
+		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositDTO.phoneMAccount());
 		
 		if (moneyAccount == null) {
-			throw new IllegalArgumentException("Money Account with phone number: " + depositeDTO.phoneMAccount() + " not found.");
+			throw new IllegalArgumentException("Money Account with phone number: " + depositDTO.phoneMAccount() + " not found.");
 		}
 		
-		if (depositeDTO.amount() <= 0.0){
-			throw new IllegalArgumentException("This amount is invalid, please try again.");
+		if (depositDTO.amount() <= 0.0){
+			throw new Exception("This amount is invalid, please try again.");
 		}
-		if (moneyAccount.getAmount() < depositeDTO.amount()){
-			throw new IllegalArgumentException("Your account "+moneyAccount.getName()+" has no sufficient amount for this deposit, please reload it. it balance is: "+moneyAccount.getAmount());
+		if (moneyAccount.getAmount() < depositDTO.amount()){
+			throw new Exception("Your account "+moneyAccount.getName()+" has no sufficient amount for this deposit, please reload it. it balance is: "+moneyAccount.getAmount());
 		}
 		
 		Deposit deposit = new Deposit();
 		
-		deposit.setAmount(depositeDTO.amount());
-		deposit.setDescription(depositeDTO.description());
+		deposit.setAmount(depositDTO.amount());
+		deposit.setDescription(depositDTO.description());
 		
-		moneyAccount.setAmount(moneyAccount.getAmount() - depositeDTO.amount());
-		deposit.setmAccountNumber(depositeDTO.phoneMAccount());
+		moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
+		deposit.setmAccountNumber(depositDTO.phoneMAccount());
 		
-		clientWallet.setAmount(clientWallet.getAmount() + depositeDTO.amount());
+		clientWallet.setAmount(clientWallet.getAmount() + depositDTO.amount());
 		deposit.setClient(client);
 		
-		deposit.setDateDeposite(LocalDate.now());
-		deposit.setTimeDeposite(LocalTime.now());
+		deposit.setDateDeposit(LocalDate.now());
+		deposit.setTimeDeposit(LocalTime.now());
 		
 		moneyAccountRepository.save(moneyAccount);
 		walletRepository.save(clientWallet);
 		
-		depositeRepository.save(deposit);
+		depositRepository.save(deposit);
 	}
 	
 	public Deposit getDeposit(int clientID, int depositID){
@@ -89,7 +88,7 @@ public class DepositSercives {
 		
 		Client client = optionalClient.get();
 		
-		Deposit deposit = depositeRepository.findByClient_IdAndId(clientID, depositID);
+		Deposit deposit = depositRepository.findByClient_IdAndId(clientID, depositID);
 		
 		if (deposit == null){
 			throw new IllegalArgumentException(client.getName()+" has made no deposit at this ID: "+depositID);
@@ -107,7 +106,7 @@ public class DepositSercives {
 		
 		Client client = optionalClient.get();
 		
-		List<Deposit>listDeposit = depositeRepository.findAllByClientId(clientID);
+		List<Deposit>listDeposit = depositRepository.findAllByClientId(clientID);
 		if (listDeposit.isEmpty()){
 			throw new IllegalArgumentException(client.getName()+"   has made no deposit yet.");
 		}

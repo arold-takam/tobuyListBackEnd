@@ -18,15 +18,16 @@ public class Deposit {
 	
 	@Column(name = "description")
 	private String description;
-	
-	@Column(name = "mAccountNumber", nullable = false, length = 9)
+
+
+	@Column(name = "m_Account_Number", nullable = false, length = 9)
 	private String mAccountNumber;
 	
-	@Column(name = "date_deposite")
-	private LocalDate dateDeposite;
+	@Column(name = "date_deposit")
+	private LocalDate dateDeposit;
 	
-	@Column(name = "time_deposite")
-	private LocalTime timeDeposite;
+	@Column(name = "time_deposit")
+	private LocalTime timeDeposit;
 	
 	@ManyToOne
 	@JoinColumn(name = "client_id", nullable = false)
@@ -35,12 +36,12 @@ public class Deposit {
 	public Deposit() {
 	}
 	
-	public Deposit(double amount, String description, String mAccountNumber, LocalDate dateDeposite, LocalTime timeDeposite, Client client) {
+	public Deposit(double amount, String description, String mAccountNumber, LocalDate dateDeposit, LocalTime timeDeposit, Client client) {
 		this.amount = amount;
 		this.description = description;
 		this.mAccountNumber = mAccountNumber;
-		this.dateDeposite = dateDeposite;
-		this.timeDeposite = timeDeposite;
+		this.dateDeposit = dateDeposit;
+		this.timeDeposit = timeDeposit;
 		this.client = client;
 	}
 	
@@ -64,20 +65,20 @@ public class Deposit {
 		this.description = description;
 	}
 	
-	public LocalDate getDateDeposite() {
-		return dateDeposite;
+	public LocalDate getDateDeposit() {
+		return dateDeposit;
 	}
 	
-	public void setDateDeposite(LocalDate dateDeposite) {
-		this.dateDeposite = dateDeposite;
+	public void setDateDeposit(LocalDate dateDeposite) {
+		this.dateDeposit = dateDeposite;
 	}
 	
-	public LocalTime getTimeDeposite() {
-		return timeDeposite;
+	public LocalTime getTimeDeposit() {
+		return timeDeposit;
 	}
 	
-	public void setTimeDeposite(LocalTime timeDeposite) {
-		this.timeDeposite = timeDeposite;
+	public void setTimeDeposit(LocalTime timeDeposite) {
+		this.timeDeposit = timeDeposite;
 	}
 	
 	public Client getClient() {
@@ -88,7 +89,7 @@ public class Deposit {
 		this.client = client;
 	}
 	
-	public String getmAccountNumber() {
+	public String getMAccountNumber() {
 		return mAccountNumber;
 	}
 	

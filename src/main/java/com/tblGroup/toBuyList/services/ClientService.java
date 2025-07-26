@@ -76,7 +76,7 @@ public class ClientService {
 		throw  new Exception("Invalid client info, try gain.");
 	}
 
-	@Transactional
+
 	public void deleteClient(int id){
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 
@@ -110,9 +110,6 @@ public class ClientService {
 
 		Client client = optionalClient.get();
 
-		if ( client.getWallet() == null){
-			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
-		}
 
 		return client.getWallet();
 	}
