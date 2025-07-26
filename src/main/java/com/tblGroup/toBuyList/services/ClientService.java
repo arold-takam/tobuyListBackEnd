@@ -10,6 +10,7 @@ import com.tblGroup.toBuyList.repositories.ClientRepository;
 import com.tblGroup.toBuyList.repositories.WalletRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -27,52 +28,55 @@ public class ClientService {
 	
 //	------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
-	public ClientResponseDTO createClient(ClientDTO clientDTO){
-		Client client = new Client();
-		
-		client.setName(clientDTO.name());
-		client.setMail(clientDTO.mail());
-		client.setPassword(clientDTO.password());
+	public Client createClient(Client client){
 		
 		Wallet wallet = new Wallet();
-		wallet.setAmount(0.0);
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
 		
+		walletRepository.save(wallet);
+		
 		client.setWallet(wallet);
-		wallet.setClient(client);
 		
-		Client clientSaved = clientRepository.save(client);
-		
-		WalletResponseDTO walletResponseDTO = new WalletResponseDTO(
-			clientSaved.getWallet().getId(),
-			clientSaved.getWallet().getAmount(),
-			clientSaved.getWallet().getWalletNumber()
-		);
-		
-		return new ClientResponseDTO(
-			clientSaved.getId(),
-			clientSaved.getName(),
-			clientSaved.getMail(),
-			clientSaved.getPassword(),
-			walletResponseDTO
-		);
+		 return clientRepository.save(client);
 	}
 	
-	public Client getClientById(int id){
+	public ClientDTO getClientById(int id){
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 		
 		if (optionalClient.isEmpty()){
 			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
 		}
 		
-		return optionalClient.get();
+		Client client = optionalClient.get();
+		
+		return new ClientDTO(
+			client.getId(),
+			client.getName(),
+			client.getMail(),
+			client.getPassword()
+		);
 	}
 	
-	public List<Client>getAllClients(){
-		return clientRepository.findAll();
+	public List<ClientDTO>getAllClients(){
+		List<Client> clientList = clientRepository.findAll();
+		
+		List<ClientDTO>clientDTOList = new ArrayList<>();
+		
+		for (Client client: clientList){
+			clientDTOList.add(
+				new ClientDTO(
+					client.getId(),
+					client.getName(),
+					client.getMail(),
+					client.getPassword()
+				)
+			);
+		}
+		
+		return clientDTOList;
 	}
 	
-	public Client updateClient(int id, ClientDTO newClient) throws Exception {
+	public ClientDTO updateClient(int id, ClientDTO newClient) throws Exception {
 		Optional<Client>optionalClient =  clientRepository.findById(id);
 		
 		if (optionalClient.isEmpty()){
@@ -86,7 +90,14 @@ public class ClientService {
 			existingClient.setMail(newClient.mail());
 			existingClient.setPassword(newClient.password());
 			
-			return clientRepository.save(existingClient);
+			clientRepository.save(existingClient);
+			
+			return new ClientDTO(
+				existingClient.getId(),
+				existingClient.getName(),
+				existingClient.getMail(),
+				existingClient.getPassword()
+			);
 		}
 		
 		throw  new Exception("Invalid client info, try gain.");
@@ -104,6 +115,8 @@ public class ClientService {
 		clientRepository.deleteById(id);
 
 	}
+	
+//	------------------------------------------------------------------
 	
 	private String autoGenerateAWalletNumber(){
 		String walletNumber;

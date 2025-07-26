@@ -2,6 +2,7 @@ package com.tblGroup.toBuyList.controllers;
 
 import com.tblGroup.toBuyList.dto.AmountDTO;
 import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
+import com.tblGroup.toBuyList.dto.MoneyAccountResponseDTO;
 import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
@@ -37,9 +38,9 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
+	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.getAccountByID(clientID, mAccountID);
+			MoneyAccountResponseDTO moneyAccount = moneyAccountService.getAccountByID(clientID, mAccountID);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -48,8 +49,8 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<MoneyAccount>>getAllAccount(@PathVariable int clientID){
-			List<MoneyAccount> moneyAccountList = moneyAccountService.getAllAccounts(clientID);
+	public ResponseEntity<List<MoneyAccountResponseDTO>>getAllAccount(@PathVariable int clientID){
+			List<MoneyAccountResponseDTO> moneyAccountList = moneyAccountService.getAllAccounts(clientID);
 			
 			return new ResponseEntity<>(moneyAccountList, HttpStatus.OK);
 	}

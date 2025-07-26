@@ -1,6 +1,7 @@
 package com.tblGroup.toBuyList.controllers;
 
-import com.tblGroup.toBuyList.dto.DepositeDTO;
+import com.tblGroup.toBuyList.dto.DepositDTO;
+import com.tblGroup.toBuyList.dto.DepositResponseDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.models.Deposit;
 import com.tblGroup.toBuyList.services.DepositSercives;
@@ -43,9 +44,9 @@ public class WalletController {
     
     //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
     @PostMapping(path = "/deposit/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Deposit>create(@PathVariable int clientID, @RequestParam String phoneMAccount, @RequestBody DepositeDTO depositeDTO){
+    public ResponseEntity<Deposit>create(@PathVariable int clientID, @RequestParam String phoneMAccount, @RequestBody DepositDTO depositDTO){
         try {
-            Deposit deposit = depositSercives.makeDeposit(clientID, phoneMAccount, depositeDTO);
+            Deposit deposit = depositSercives.makeDeposit(clientID, phoneMAccount, depositDTO);
             
             return new ResponseEntity<>(deposit, HttpStatus.CREATED);
         }catch (IllegalArgumentException e){
@@ -54,9 +55,9 @@ public class WalletController {
     }
     
     @GetMapping(path = "/deposit/get/{clientID}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Deposit>get(@PathVariable int clientID, @RequestParam int depositID){
+    public ResponseEntity<DepositResponseDTO>get(@PathVariable int clientID, @RequestParam int depositID){
         try {
-            Deposit deposit = depositSercives.getDeposit(clientID, depositID);
+            DepositResponseDTO deposit = depositSercives.getDeposit(clientID, depositID);
             
             return new ResponseEntity<>(deposit, HttpStatus.OK);
         }catch (IllegalArgumentException e){
@@ -67,9 +68,9 @@ public class WalletController {
     }
     
     @GetMapping(path = "/deposit/get/all/{clientID}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Deposit>>get(@PathVariable int clientID){
+    public ResponseEntity<List<DepositResponseDTO>>get(@PathVariable int clientID){
         try {
-            List<Deposit> depositList = depositSercives.getAllDeposit(clientID);
+            List<DepositResponseDTO> depositList = depositSercives.getAllDeposit(clientID);
             
             return new ResponseEntity<>(depositList, HttpStatus.OK);
         }catch (IllegalArgumentException e){

@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface WalletRepository extends JpaRepository<Wallet, Integer> {
 
     boolean existsByWalletNumber(String walletNumber);
+    
+    Wallet findByWalletNumberContainingIgnoreCase(String walletNumber);
 }
