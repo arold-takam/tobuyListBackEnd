@@ -19,9 +19,8 @@ public class Deposit {
 	@Column(name = "description")
 	private String description;
 	
-	@ManyToOne
-	@JoinColumn(name = "money_account_id", referencedColumnName = "id")
-	private MoneyAccount moneyAccount;
+	@Column(name = "mAccountNumber", nullable = false, length = 9)
+	private String mAccountNumber;
 	
 	@Column(name = "date_deposite")
 	private LocalDate dateDeposite;
@@ -36,10 +35,10 @@ public class Deposit {
 	public Deposit() {
 	}
 	
-	public Deposit(double amount, String description, MoneyAccount moneyAccount, LocalDate dateDeposite, LocalTime timeDeposite, Client client) {
+	public Deposit(double amount, String description, String mAccountNumber, LocalDate dateDeposite, LocalTime timeDeposite, Client client) {
 		this.amount = amount;
 		this.description = description;
-		this.moneyAccount = moneyAccount;
+		this.mAccountNumber = mAccountNumber;
 		this.dateDeposite = dateDeposite;
 		this.timeDeposite = timeDeposite;
 		this.client = client;
@@ -65,14 +64,6 @@ public class Deposit {
 		this.description = description;
 	}
 	
-	public MoneyAccount getMoneyAccount() {
-		return moneyAccount;
-	}
-	
-	public void setMoneyAccount(MoneyAccount moneyAccount) {
-		this.moneyAccount = moneyAccount;
-	}
-	
 	public LocalDate getDateDeposite() {
 		return dateDeposite;
 	}
@@ -95,5 +86,13 @@ public class Deposit {
 	
 	public void setClient(Client client) {
 		this.client = client;
+	}
+	
+	public String getmAccountNumber() {
+		return mAccountNumber;
+	}
+	
+	public void setmAccountNumber(String mAccountNumber) {
+		this.mAccountNumber = mAccountNumber;
 	}
 }

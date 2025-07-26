@@ -36,7 +36,7 @@ public class DepositSercives {
 	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
-	public Deposit makeDeposit(int clientID, String phoneMAccount, DepositeDTO depositeDTO){
+	public void makeDeposit(int clientID, DepositeDTO depositeDTO){
 		Optional<Client>optionalClient = clientRepository.findById(clientID);
 		
 		if (optionalClient.isEmpty()){
@@ -46,18 +46,11 @@ public class DepositSercives {
 		Client client = optionalClient.get();
 		
 		Wallet clientWallet = client.getWallet();
-		if (clientWallet == null){
-			throw new IllegalArgumentException("This client has no wallet yet");
-		}
 		
-		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(phoneMAccount);
+		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositeDTO.phoneMAccount());
 		
 		if (moneyAccount == null) {
-			throw new IllegalArgumentException("Money Account with phone number: " + phoneMAccount + " not found.");
-		}
-		
-		if (moneyAccount.getClient().getId() != clientID) {
-			throw new IllegalArgumentException("Money Account with phone: " + phoneMAccount + " does not belong to client with ID: " + clientID);
+			throw new IllegalArgumentException("Money Account with phone number: " + depositeDTO.phoneMAccount() + " not found.");
 		}
 		
 		if (depositeDTO.amount() <= 0.0){
@@ -73,7 +66,7 @@ public class DepositSercives {
 		deposit.setDescription(depositeDTO.description());
 		
 		moneyAccount.setAmount(moneyAccount.getAmount() - depositeDTO.amount());
-		deposit.setMoneyAccount(moneyAccount);
+		deposit.setmAccountNumber(depositeDTO.phoneMAccount());
 		
 		clientWallet.setAmount(clientWallet.getAmount() + depositeDTO.amount());
 		deposit.setClient(client);
@@ -84,7 +77,7 @@ public class DepositSercives {
 		moneyAccountRepository.save(moneyAccount);
 		walletRepository.save(clientWallet);
 		
-		return depositeRepository.save(deposit);
+		depositeRepository.save(deposit);
 	}
 	
 	public Deposit getDeposit(int clientID, int depositID){

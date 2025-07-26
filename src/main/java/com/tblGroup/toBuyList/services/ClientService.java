@@ -36,7 +36,6 @@ public class ClientService {
 		clientSaved.setName(client.name());
 		clientSaved.setMail(client.mail());
 		clientSaved.setPassword(client.password());
-		wallet.setAmount(500.00);
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
 		walletRepository.save(wallet);
 		clientSaved.setWallet(wallet);

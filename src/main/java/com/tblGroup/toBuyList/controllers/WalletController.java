@@ -29,7 +29,7 @@ public class WalletController {
 
 //    TRANSFERT MANAGEMENT--------------------------------------------------------------------------------------------------------------------------
 
-    @PostMapping("/transfer/{clientId}")
+    @PostMapping("/transferToAccount/{clientId}")
     public ResponseEntity<?> MakeATransferToAnAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer) {
         try{
             transferService.makeATransferToAnAccount(clientId, transfer);
@@ -61,11 +61,11 @@ public class WalletController {
 
     //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
     @PostMapping(path = "/deposit/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Deposit>create(@PathVariable int clientID, @RequestParam String phoneMAccount, @RequestBody DepositeDTO depositeDTO){
+    public ResponseEntity<?>create(@PathVariable int clientID,  @RequestBody DepositeDTO depositeDTO){
         try {
-            Deposit deposit = depositSercives.makeDeposit(clientID, phoneMAccount, depositeDTO);
+            depositSercives.makeDeposit(clientID, depositeDTO);
 
-            return new ResponseEntity<>(deposit, HttpStatus.CREATED);
+            return new ResponseEntity<>( HttpStatus.OK);
         }catch (IllegalArgumentException e){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
