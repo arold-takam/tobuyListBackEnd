@@ -4,6 +4,7 @@ package com.tblGroup.toBuyList.controllers;
 import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
+import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.services.ClientService;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
@@ -80,4 +81,19 @@ public class ClientController {
 		}
 	}
 	
+	//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
+
+	@GetMapping(path = "/get/wallet/{clientID}", produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<Wallet>getWallet(@PathVariable int clientID){
+		try {
+			Wallet wallet = clientService.getWallet(clientID);
+
+			return new ResponseEntity<>(wallet, HttpStatus.OK);
+		}catch (IllegalArgumentException e){
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+	}
+
 }

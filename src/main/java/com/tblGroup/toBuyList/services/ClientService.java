@@ -20,7 +20,7 @@ public class ClientService {
 	private final ClientRepository clientRepository;
 	private final WalletRepository walletRepository;
 	private final TransferRepository transferRepository;
-	
+
 	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository) {
 		this.clientRepository = clientRepository;
         this.walletRepository = walletRepository;
@@ -97,8 +97,25 @@ public class ClientService {
 			walletNumber = String.format("%06d", new Random().nextInt(1000000));
 		} while (walletRepository.existsByWalletNumber(walletNumber));
 
-			return walletNumber;
+		return walletNumber;
+	}
+
+	//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
+
+	public Wallet getWallet(int clientID){
+		Optional<Client>optionalClient = clientRepository.findById(clientID);
+
+		if (optionalClient.isEmpty()){
+			throw new IllegalArgumentException("No client found at the ID: "+clientID);
 		}
 
+		Client client = optionalClient.get();
+
+		if ( client.getWallet() == null){
+			throw new IllegalArgumentException("This client has already a wallet, with a balance of: "+client.getWallet().getAmount());
+		}
+
+		return client.getWallet();
+	}
 
 }
