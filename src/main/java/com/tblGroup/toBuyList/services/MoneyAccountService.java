@@ -35,6 +35,10 @@ public class MoneyAccountService {
 			throw new IllegalArgumentException("Client with this id not found");
 		}
 
+		if(moneyAccountRepository.existsByPhone(moneyAccount.phone())){
+			throw new IllegalArgumentException("this number phone already exists");
+		}
+
 		Client client = optionalClient.get();
 		MoneyAccount moneyAccountAdded = new MoneyAccount();
 		moneyAccountAdded.setName(moneyAccount.name());

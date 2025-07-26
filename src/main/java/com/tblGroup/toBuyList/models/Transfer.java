@@ -18,27 +18,32 @@ public class Transfer {
     @Column(name="description")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name="money_account_id")
-    private MoneyAccount receiverAccount;
 
-    @ManyToOne
-    @JoinColumn(name = "wallet_receiver_id")
-    private Wallet walletReceiver;
+    @Column(name="receiver_account")
+    private String receiverAccountNumber;
+
+
+    @Column(name = "wallet_number")
+    private String walletNumber;
 
     @Column(name="date_transfer")
     private Date dateTransfer;
+
+    @ManyToOne()
+    @JoinColumn(name="client_id")
+    private Client client;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name="type_transfer")
     private TypeTransfer typeTransfer;
 
-    public Transfer(double amount, String description, MoneyAccount receiverAccount, Wallet walletReceiver, Date dateTransfer, TypeTransfer typeTransfer) {
+    public Transfer(double amount, String description, String receiverAccountNumber, String walletNumber, Date dateTransfer, Client client, TypeTransfer typeTransfer) {
         this.amount = amount;
         this.description = description;
-        this.receiverAccount = receiverAccount;
-        this.walletReceiver = walletReceiver;
+        this.receiverAccountNumber = receiverAccountNumber;
+        this.walletNumber = walletNumber;
         this.dateTransfer = dateTransfer;
+        this.client = client;
         this.typeTransfer = typeTransfer;
     }
 
@@ -70,21 +75,14 @@ public class Transfer {
         this.description = description;
     }
 
-    public MoneyAccount getReceiverAccount() {
-        return receiverAccount;
+    public String getReceiverAccountNumber() {
+        return receiverAccountNumber;
     }
 
-    public void setReceiverAccount(MoneyAccount receiverAccount) {
-        this.receiverAccount = receiverAccount;
+    public void setReceiverAccountNumber(String receiverAccountNumber) {
+        this.receiverAccountNumber = receiverAccountNumber;
     }
 
-    public Wallet getWalletReceiver() {
-        return walletReceiver;
-    }
-
-    public void setWalletReceiver(Wallet walletReceiver) {
-        this.walletReceiver = walletReceiver;
-    }
 
     public Date getDateTransfer() {
         return dateTransfer;
@@ -100,5 +98,21 @@ public class Transfer {
 
     public void setTypeTransfer(TypeTransfer typeTransfer) {
         this.typeTransfer = typeTransfer;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public String getWalletNumber() {
+        return walletNumber;
+    }
+
+    public void setWalletNumber(String walletNumber) {
+        this.walletNumber = walletNumber;
     }
 }

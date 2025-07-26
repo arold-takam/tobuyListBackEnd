@@ -26,16 +26,21 @@ public class Client {
 	@OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private List<MoneyAccount>moneyAccountList = new ArrayList<>();
-	
+
+	@OneToOne()
+	@JoinColumn(name = "wallet")
+	private Wallet wallet;
+
 	public Client() {
 	}
 	
-	public Client(String name, String mail, String password, List<MoneyAccount>moneyAccountList) {
+	public Client(String name, String mail, String password, List<MoneyAccount>moneyAccountList, Wallet wallet) {
 		this.name = name;
 		this.mail = mail;
 		this.password = password;
 		this.moneyAccountList = moneyAccountList;
-	}
+        this.wallet = wallet;
+    }
 
 //	------------------------------------------------------------------------------------------------------------
 	
@@ -74,4 +79,12 @@ public class Client {
 	public void setMoneyAccountList(List<MoneyAccount> moneyAccountList) {
 		this.moneyAccountList = moneyAccountList;
 	}
+
+    public Wallet getWallet() {
+        return wallet;
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
+    }
 }

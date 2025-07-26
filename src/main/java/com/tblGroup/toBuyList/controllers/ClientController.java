@@ -27,7 +27,7 @@ public class ClientController {
 // -------------------------------------------------------CLIENT MANAGEMENT-----------------------------------------------------------------
 	
 	@PostMapping(path = "/create", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Client>createClient(@RequestBody Client client){
+	public ResponseEntity<Client>createClient(@RequestBody ClientDTO client){
 		try {
 			Client savedClient = clientService.createClient(client);
 			

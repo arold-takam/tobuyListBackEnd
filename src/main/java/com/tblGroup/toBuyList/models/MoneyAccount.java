@@ -1,6 +1,7 @@
 package com.tblGroup.toBuyList.models;
 
 
+import com.tblGroup.toBuyList.models.Enum.MoneyAccountName;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,9 +11,10 @@ public class MoneyAccount {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@Column(name = "name",  nullable = true)
-	private String name;
+
+	@Enumerated(EnumType.ORDINAL)
+	@Column(name = "name", nullable = false)
+	private MoneyAccountName name;
 	
 	@Column(name = "phone", unique = true, nullable = false)
 	private String phone;
@@ -22,36 +24,25 @@ public class MoneyAccount {
 	
 	@Column(name = "amount")
 	private double amount;
-	
-	public void setName(String name) {
-		this.name = name;
-	}
+
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	
+
+
 	public MoneyAccount() {
+
 	}
-	
-	public MoneyAccount(String name, String phone, String password, Client client, double amount) {
-		this.name = name;
-		this.phone = phone;
-		this.password = password;
-		this.client = client;
-		this.amount = amount;
-	}
+
 
 //	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
 		return id;
 	}
-	
-	public String getName() {
-		return name;
-	}
-	
+
 	public String getPhone() {
 		return phone;
 	}
@@ -83,4 +74,12 @@ public class MoneyAccount {
 	public void setClient(Client client) {
 		this.client = client;
 	}
+
+    public MoneyAccountName getName() {
+        return name;
+    }
+
+    public void setName(MoneyAccountName name) {
+        this.name = name;
+    }
 }

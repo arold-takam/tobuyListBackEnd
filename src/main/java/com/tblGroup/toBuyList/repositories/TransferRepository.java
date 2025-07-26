@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TransferRepository extends JpaRepository<Transfer, Integer> {
+
+
+    void deleteByClient_id(int id);
 }

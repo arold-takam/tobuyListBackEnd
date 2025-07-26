@@ -16,15 +16,10 @@ public class Wallet {
     @Column(name="wallet_number" ,unique=true, length = 6)
     private String walletNumber;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name= "client_id" , nullable = false)
-    private Client client;
 
-
-    public Wallet(double amount, String walletNumber, Client client) {
+    public Wallet(double amount, String walletNumber) {
         this.amount = amount;
         this.walletNumber = walletNumber;
-        this.client = client;
     }
 
     public Wallet() {
@@ -45,13 +40,6 @@ public class Wallet {
         this.amount = amount;
     }
 
-    public Client getClient() {
-        return client;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
 
     public String getWalletNumber() {
         return walletNumber;
@@ -60,4 +48,6 @@ public class Wallet {
     public void setWalletNumber(String walletNumber) {
         this.walletNumber = walletNumber;
     }
+
+
 }

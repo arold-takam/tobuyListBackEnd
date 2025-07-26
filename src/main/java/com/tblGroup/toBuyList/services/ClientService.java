@@ -3,10 +3,13 @@ package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.Client;
+import com.tblGroup.toBuyList.models.Transfer;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
+import com.tblGroup.toBuyList.repositories.TransferRepository;
 import com.tblGroup.toBuyList.repositories.WalletRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,23 +19,28 @@ import java.util.Random;
 public class ClientService {
 	private final ClientRepository clientRepository;
 	private final WalletRepository walletRepository;
+	private final TransferRepository transferRepository;
 	
-	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository) {
+	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository) {
 		this.clientRepository = clientRepository;
         this.walletRepository = walletRepository;
+        this.transferRepository = transferRepository;
     }
 	
 	
 //	------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
-	public Client createClient(Client client){
+	public Client createClient(ClientDTO client){
 		Wallet wallet = new Wallet();
-		Client clientSaved = clientRepository.save(client);
-		wallet.setClient(clientSaved);
+		Client clientSaved = new Client();
+		clientSaved.setName(client.name());
+		clientSaved.setMail(client.mail());
+		clientSaved.setPassword(client.password());
 		wallet.setAmount(500.00);
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
 		walletRepository.save(wallet);
-		return clientSaved;
+		clientSaved.setWallet(wallet);
+		return clientRepository.save(clientSaved);
 	}
 	
 	public Client getClientById(int id){
@@ -68,16 +76,18 @@ public class ClientService {
 		
 		throw  new Exception("Invalid client info, try gain.");
 	}
-	
+
+	@Transactional
 	public void deleteClient(int id){
 		Optional<Client>optionalClient =  clientRepository.findById(id);
-		Wallet wallet = walletRepository.findByClient_Id(id);
+
 		if (optionalClient.isEmpty()){
 			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
 		}
 
-		walletRepository.deleteById(wallet.getId());
+		transferRepository.deleteByClient_id(id);
 		clientRepository.deleteById(id);
+		walletRepository.deleteById(optionalClient.get().getWallet().getId());
 
 	}
 
