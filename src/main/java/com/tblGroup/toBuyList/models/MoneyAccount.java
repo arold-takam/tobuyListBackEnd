@@ -1,11 +1,7 @@
 package com.tblGroup.toBuyList.models;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "money_account")
@@ -35,22 +31,18 @@ public class MoneyAccount {
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	
-	@OneToMany(mappedBy = "receiverAccount", cascade = CascadeType.ALL, orphanRemoval = true)
-	@JsonIgnore
-	private List<Credit> creditReceived = new ArrayList<>();
-	
 	public MoneyAccount() {
 	}
 	
-	public MoneyAccount(String name, String phone, String password, double amount, Client client) {
+	public MoneyAccount(String name, String phone, String password, Client client, double amount) {
 		this.name = name;
 		this.phone = phone;
 		this.password = password;
-		this.amount = amount;
 		this.client = client;
+		this.amount = amount;
 	}
-	
-	//	----------------------------------------------------------------------------------------------------------------------------------------------
+
+//	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
 		return id;

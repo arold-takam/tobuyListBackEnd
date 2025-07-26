@@ -3,7 +3,6 @@ package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.AmountDTO;
 import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
-import com.tblGroup.toBuyList.dto.MoneyAccountResponseDTO;
 import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
@@ -12,7 +11,6 @@ import com.tblGroup.toBuyList.repositories.MoneyAccountRepository;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +46,7 @@ public class MoneyAccountService {
 		return moneyAccountRepository.save(moneyAccountAdded);
 	}
 	
-	public MoneyAccountResponseDTO getAccountByID(int clientID, int mAccountID){
+	public MoneyAccount getAccountByID(int clientID, int mAccountID){
 			MoneyAccount moneyAccount = moneyAccountRepository.findByClient_IdAndId(clientID, mAccountID);
 			
 			if (moneyAccount == null){
@@ -57,41 +55,18 @@ public class MoneyAccountService {
 			
 			Hibernate.initialize(moneyAccount.getClient());
 			
-			return new MoneyAccountResponseDTO(
-				moneyAccount.getId(),
-				moneyAccount.getName(),
-				moneyAccount.getPhone(),
-				moneyAccount.getPassword(),
-				moneyAccount.getAmount(),
-				clientID
-			);
+			return moneyAccount;
 		}
 		
-	public List<MoneyAccountResponseDTO>getAllAccounts(int clientID){
+	public List<MoneyAccount>getAllAccounts(int clientID){
 			Optional<Client>optionalClient = clientRepository.findById(clientID);
 			
 			if (optionalClient.isEmpty()){
 				throw new IllegalArgumentException("Client with the ID: "+clientID+" not found.");
 			}
-			
-			List<MoneyAccount>moneyAccountList = moneyAccountRepository.findAllByClientId(clientID);
-			
-			List<MoneyAccountResponseDTO>moneyAccountResponseDTOList = new ArrayList<>();
-			
-			for (MoneyAccount moneyAccount: moneyAccountList){
-				moneyAccountResponseDTOList.add(
-					new MoneyAccountResponseDTO(
-						moneyAccount.getId(),
-						moneyAccount.getName(),
-						moneyAccount.getPhone(),
-						moneyAccount.getPassword(),
-						moneyAccount.getAmount(),
-						clientID
-					)
-				);
-			}
-			
-                         return moneyAccountResponseDTOList;
+
+
+        return moneyAccountRepository.findAllByClientId(clientID);
 		}
 		
 	public MoneyAccount updateAccount(int clientID, int mAccountID,  PasswordDTO passwordDTO){

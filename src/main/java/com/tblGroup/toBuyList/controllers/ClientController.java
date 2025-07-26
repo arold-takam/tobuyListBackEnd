@@ -29,9 +29,9 @@ public class ClientController {
 // -------------------------------------------------------CLIENT MANAGEMENT-----------------------------------------------------------------
 	
 	@PostMapping(path = "/create", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Client>createClient(@RequestBody Client client){
+	public ResponseEntity<ClientResponseDTO>createClient(@RequestBody ClientDTO clientDTO){
 		try {
-			Client savedClient = clientService.createClient(client);
+			ClientResponseDTO savedClient = clientService.createClient(clientDTO);
 			
 			return new ResponseEntity<>(savedClient, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
@@ -40,9 +40,9 @@ public class ClientController {
 	}
 	
 	@GetMapping(path = "/get/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<ClientDTO>getClient(@PathVariable int clientID){
+	public ResponseEntity<Client>getClient(@PathVariable int clientID){
 		try {
-			ClientDTO foundClient = clientService.getClientById(clientID);
+			Client foundClient = clientService.getClientById(clientID);
 			
 			return new ResponseEntity<>(foundClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -51,16 +51,16 @@ public class ClientController {
 	}
 	
 	@GetMapping(path = "/get", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<ClientDTO>> getAllClient(){
-		List<ClientDTO>clientList = clientService.getAllClients();
+	public ResponseEntity<List<Client>> getAllClient(){
+		List<Client>clientList = clientService.getAllClients();
 		
 		return new ResponseEntity<>(clientList, HttpStatus.OK);
 	}
 	
 	@PutMapping(path = "/update/{clientID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<ClientDTO>updateClient(@PathVariable int clientID, @RequestBody ClientDTO newClient){
+	public ResponseEntity<Client>updateClient(@PathVariable int clientID, @RequestBody ClientDTO newClient){
 		try {
-			ClientDTO updatedClient = clientService.updateClient(clientID, newClient);
+			Client updatedClient = clientService.updateClient(clientID, newClient);
 			
 			return  new ResponseEntity<>(updatedClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){

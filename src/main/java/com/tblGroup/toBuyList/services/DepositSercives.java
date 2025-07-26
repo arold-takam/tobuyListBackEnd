@@ -1,7 +1,6 @@
 package com.tblGroup.toBuyList.services;
 
-import com.tblGroup.toBuyList.dto.DepositDTO;
-import com.tblGroup.toBuyList.dto.DepositResponseDTO;
+import com.tblGroup.toBuyList.dto.DepositeDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.Deposit;
 import com.tblGroup.toBuyList.models.MoneyAccount;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +36,7 @@ public class DepositSercives {
 	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
-	public Deposit makeDeposit(int clientID, String phoneMAccount, DepositDTO depositeDTO){
+	public Deposit makeDeposit(int clientID, String phoneMAccount, DepositeDTO depositeDTO){
 		Optional<Client>optionalClient = clientRepository.findById(clientID);
 		
 		if (optionalClient.isEmpty()){
@@ -89,7 +87,7 @@ public class DepositSercives {
 		return depositeRepository.save(deposit);
 	}
 	
-	public DepositResponseDTO getDeposit(int clientID, int depositID){
+	public Deposit getDeposit(int clientID, int depositID){
 		Optional<Client>optionalClient = clientRepository.findById(clientID);
 		
 		if (optionalClient.isEmpty()){
@@ -104,19 +102,10 @@ public class DepositSercives {
 			throw new IllegalArgumentException(client.getName()+" has made no deposit at this ID: "+depositID);
 		}
 		
-		return new DepositResponseDTO(
-			deposit.getId(),
-			deposit.getAmount(),
-			deposit.getDescription(),
-			deposit.getMoneyAccount().getId(),
-			deposit.getMoneyAccount().getAmount(),
-			deposit.getClient().getId(),
-			deposit.getDateDeposite(),
-			deposit.getTimeDeposite()
-		);
+		return deposit;
 	}
 	
-	public List<DepositResponseDTO> getAllDeposit(int clientID){
+	public List<Deposit> getAllDeposit(int clientID){
 		Optional<Client>optionalClient = clientRepository.findById(clientID);
 		
 		if (optionalClient.isEmpty()){
@@ -130,24 +119,7 @@ public class DepositSercives {
 			throw new IllegalArgumentException(client.getName()+"   has made no deposit yet.");
 		}
 		
-		List<DepositResponseDTO>depositResponseDTOList = new ArrayList<>();
-		
-		for (Deposit deposit: listDeposit){
-			depositResponseDTOList.add(
-				new DepositResponseDTO(
-				deposit.getId(),
-				deposit.getAmount(),
-				deposit.getDescription(),
-				deposit.getMoneyAccount().getId(),
-				deposit.getMoneyAccount().getAmount(),
-				deposit.getClient().getId(),
-				deposit.getDateDeposite(),
-				deposit.getTimeDeposite()
-				)
-			);
-		}
-		
-		return depositResponseDTOList;
+		return listDeposit;
 	}
 	
 }

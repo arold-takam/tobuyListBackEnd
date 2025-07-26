@@ -31,22 +31,18 @@ public class Client {
 	@JsonIgnore
 	private List<MoneyAccount>moneyAccountList = new ArrayList<>();
 	
-	@OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true) // Changé de @OneToOne à @OneToMany
-	@JsonIgnore
-	private List<Credit> credits = new ArrayList<>();
-	
 	public Client() {
 	}
 	
-	public Client(String name, String mail, String password, Wallet wallet, List<MoneyAccount> moneyAccountList, Credit credit) {
+	public Client(String name, String mail, String password, Wallet wallet, List<MoneyAccount>moneyAccountList) {
 		this.name = name;
 		this.mail = mail;
 		this.password = password;
 		this.wallet = wallet;
 		this.moneyAccountList = moneyAccountList;
 	}
-	
-	//	------------------------------------------------------------------------------------------------------------
+
+//	------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
 		return id;

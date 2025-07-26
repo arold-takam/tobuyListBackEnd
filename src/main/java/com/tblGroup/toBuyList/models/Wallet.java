@@ -1,6 +1,5 @@
 package com.tblGroup.toBuyList.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -17,9 +16,13 @@ public class Wallet {
     @Column(name="wallet_number" ,unique=true, length = 6)
     private String walletNumber;
     
-    public Wallet(double amount, String walletNumber) {
+    @OneToOne(mappedBy = "wallet", fetch = FetchType.LAZY)
+    private Client client;
+    
+    public Wallet(double amount, String walletNumber, Client client) {
         this.amount = amount;
         this.walletNumber = walletNumber;
+        this.client = client;
     }
     
     public Wallet() {
@@ -49,5 +52,13 @@ public class Wallet {
 
     public void setWalletNumber(String walletNumber) {
         this.walletNumber = walletNumber;
+    }
+    
+    public Client getClient() {
+        return client;
+    }
+    
+    public void setClient(Client client) {
+        this.client = client;
     }
 }
