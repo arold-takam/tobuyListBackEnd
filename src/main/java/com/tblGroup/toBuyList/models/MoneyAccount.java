@@ -35,9 +35,16 @@ public class MoneyAccount {
 	public MoneyAccount() {
 
 	}
-
-
-//	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	public MoneyAccount(MoneyAccountName name, String phone, String password, double amount, Client client) {
+		this.name = name;
+		this.phone = phone;
+		this.password = password;
+		this.amount = amount;
+		this.client = client;
+	}
+	
+	//	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	public int getId() {
 		return id;

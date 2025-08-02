@@ -60,13 +60,14 @@ public class WalletController {
 
 
     //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
-    @PostMapping(path = "/deposit/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/deposit/make/{clientID}", consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<?>create(@PathVariable int clientID,  @RequestBody DepositDTO depositDTO){
         try {
             depositService.makeDeposit(clientID, depositDTO);
 
             return new ResponseEntity<>( HttpStatus.OK);
         }catch (IllegalArgumentException e){
+            System.out.printf("%s", e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

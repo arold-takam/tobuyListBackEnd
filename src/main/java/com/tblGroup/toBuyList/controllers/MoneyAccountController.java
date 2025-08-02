@@ -2,7 +2,9 @@ package com.tblGroup.toBuyList.controllers;
 
 import com.tblGroup.toBuyList.dto.AmountDTO;
 import com.tblGroup.toBuyList.dto.MoneyAccountDTO;
+import com.tblGroup.toBuyList.dto.MoneyAccountResponseDTO;
 import com.tblGroup.toBuyList.dto.PasswordDTO;
+import com.tblGroup.toBuyList.models.Enum.MoneyAccountName;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
 import org.springframework.http.HttpStatus;
@@ -26,9 +28,9 @@ public class MoneyAccountController {
 	//	---------------------------------------------------------------------------------------------------------------------------------------
 //	---------------------moneyAccountManagement------------------------------------------------
 	@PostMapping(path = "/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestBody MoneyAccountDTO moneyAccount){
+	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestParam MoneyAccountName moneyAccountName,  @RequestBody MoneyAccountDTO moneyAccount){
 		try {
-			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccount);
+			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccountName, moneyAccount);
 			
 			return new ResponseEntity<>(moneyAccountCreated, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
@@ -37,21 +39,21 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
+	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.getAccountByID(clientID, mAccountID);
+			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID);
 			
-			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
+			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<MoneyAccount>>getAllAccount(@PathVariable int clientID){
-			List<MoneyAccount> moneyAccountList = moneyAccountService.getAllAccounts(clientID);
+	public ResponseEntity<List<MoneyAccountResponseDTO>>getAllAccount(@PathVariable int clientID){
+			List<MoneyAccountResponseDTO> listMoneyAccountResponseDTO = moneyAccountService.getAllAccounts(clientID);
 			
-			return new ResponseEntity<>(moneyAccountList, HttpStatus.OK);
+			return new ResponseEntity<>(listMoneyAccountResponseDTO, HttpStatus.OK);
 	}
 	
 	@PutMapping(path = "/update/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)

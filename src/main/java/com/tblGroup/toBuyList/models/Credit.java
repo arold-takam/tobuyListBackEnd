@@ -1,0 +1,113 @@
+package com.tblGroup.toBuyList.models;
+
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+@Entity
+@Table(name = "credit")
+public class Credit {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private int id;
+	
+	@Column(name = "description")
+	private String description;
+	
+	@Column(name = "date_credit", nullable = false)
+	LocalDate dateCredit;
+	
+	@Column(name = "time_credit", nullable = false)
+	LocalTime timeCredit;
+	
+	@Column(name = "credit_offer_id")
+	private int creditOfferID;
+	
+	@Column(name = "receiver_account")
+	private int receiverAccountID;
+	
+	@Column(name = "wallet_receiver")
+	private int walletReceiverID;
+	
+	@OneToOne
+	@JoinColumn(name = "client_id", nullable = false)
+	private Client client;
+	
+	public Credit() {
+	
+	}
+	
+	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int creditOfferID, int receiverAccountID, int walletReceiverID, Client client) {
+		this.description = description;
+		this.dateCredit = dateCredit;
+		this.timeCredit = timeCredit;
+		this.creditOfferID = creditOfferID;
+		this.receiverAccountID = receiverAccountID;
+		this.walletReceiverID = walletReceiverID;
+		this.client = client;
+	}
+	
+	public int getId() {
+		return id;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	public LocalDate getDateCredit() {
+		return dateCredit;
+	}
+	
+	public void setDateCredit(LocalDate dateCredit) {
+		this.dateCredit = dateCredit;
+	}
+	
+	public LocalTime getTimeCredit() {
+		return timeCredit;
+	}
+	
+	public void setTimeCredit(LocalTime timeCredit) {
+		this.timeCredit = timeCredit;
+	}
+	
+	public int getCreditOfferID() {
+		return creditOfferID;
+	}
+	
+	public void setCreditOfferID(int creditOfferID) {
+		this.creditOfferID = creditOfferID;
+	}
+	
+	public int getReceiverAccountID() {
+		return receiverAccountID;
+	}
+	
+	public void setReceiverAccountID(int receiverAccountID) {
+		this.receiverAccountID = receiverAccountID;
+	}
+	
+	public int getWalletReceiverID() {
+		return walletReceiverID;
+	}
+	
+	public void setWalletReceiverID(int walletReceiverID) {
+		this.walletReceiverID = walletReceiverID;
+	}
+	
+	public Client getClient() {
+		return client;
+	}
+	
+	public void setClient(Client client) {
+		this.client = client;
+	}
+}
