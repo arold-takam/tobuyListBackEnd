@@ -1,19 +1,14 @@
 package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.DepositDTO;
-import com.tblGroup.toBuyList.models.Client;
-import com.tblGroup.toBuyList.models.Deposit;
-import com.tblGroup.toBuyList.models.MoneyAccount;
-import com.tblGroup.toBuyList.models.Wallet;
-import com.tblGroup.toBuyList.repositories.ClientRepository;
-import com.tblGroup.toBuyList.repositories.DepositRepository;
-import com.tblGroup.toBuyList.repositories.MoneyAccountRepository;
-import com.tblGroup.toBuyList.repositories.WalletRepository;
+import com.tblGroup.toBuyList.models.*;
+import com.tblGroup.toBuyList.repositories.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,15 +18,17 @@ public class DepositService {
 	private final ClientRepository clientRepository;
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
+	private final HistoryRepository historyRepository;
 
 	
 	
-	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository) {
+	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryRepository historyRepository) {
 		this.clientRepository = clientRepository;
 		this.walletRepository = walletRepository;
 		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
-	}
+        this.historyRepository = historyRepository;
+    }
 	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
@@ -77,6 +74,15 @@ public class DepositService {
 		walletRepository.save(clientWallet);
 		
 		depositRepository.save(deposit);
+
+		History history = new History();
+
+		history.setAction("DEPOSIT");
+		history.setDescription("Deposit of "+depositDTO.amount());
+		history.setDateAction(new Date(System.currentTimeMillis()));
+		history.setClient(client);
+
+		historyRepository.save(history);
 	}
 	
 	public Deposit getDeposit(int clientID, int depositID){
