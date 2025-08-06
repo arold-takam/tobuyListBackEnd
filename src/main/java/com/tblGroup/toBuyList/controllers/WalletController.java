@@ -1,10 +1,14 @@
 package com.tblGroup.toBuyList.controllers;
 
 import com.tblGroup.toBuyList.dto.DepositDTO;
+import com.tblGroup.toBuyList.dto.HistoryResponse;
 import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.Deposit;
+import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
+import com.tblGroup.toBuyList.models.History;
 import com.tblGroup.toBuyList.services.DepositService;
+import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +23,12 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 public class WalletController {
     private final TransferService transferService;
     private final DepositService depositService;
+    private final HistoryService historyService;
 
-    public WalletController(TransferService transferService, DepositService depositService) {
+    public WalletController(TransferService transferService, DepositService depositService, HistoryService historyService) {
         this.transferService = transferService;
         this.depositService = depositService;
+        this.historyService = historyService;
     }
 
 
@@ -30,9 +36,9 @@ public class WalletController {
 //    TRANSFER MANAGEMENT--------------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/transferToAccount/{clientId}")
-    public ResponseEntity<?> MakeATransferToAnAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer) {
+    public ResponseEntity<?> MakeATransferToAnAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer typeTransfer) {
         try{
-            transferService.makeATransferToAnAccount(clientId, transfer);
+            transferService.makeATransferToAnAccount(clientId, transfer, typeTransfer);
 
             return ResponseEntity.ok().build();
         }catch(IllegalArgumentException e){
@@ -45,9 +51,9 @@ public class WalletController {
     }
 
     @PostMapping("/transferToWallet/{clientId}")
-    public ResponseEntity<?> MakeATransferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer){
+    public ResponseEntity<?> MakeATransferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer typeTransfer){
         try{
-            transferService.makeATransferToAWallet(clientId, transfer);
+            transferService.makeATransferToAWallet(clientId, transfer,typeTransfer);
             return ResponseEntity.ok().build();
         }catch(IllegalArgumentException e){
             return ResponseEntity.notFound().build();
@@ -97,6 +103,19 @@ public class WalletController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    //	--------------------------------------------------------------------HISTORY-----------------------------------------------------------------
+
+    @GetMapping("/history/{clientID}")
+    public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientID){
+        try{
+            List<HistoryResponse> history = historyService.getHistory(clientID);
+            return ResponseEntity.ok(history);
+
+        }catch(IllegalArgumentException e){
+            return ResponseEntity.notFound().build();
         }
     }
 }
