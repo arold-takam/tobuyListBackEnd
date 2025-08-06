@@ -49,7 +49,7 @@ public class CreditOfferController {
 		}
 	}
 	
-	@GetMapping(path = "/getAllCreditOffer", produces = APPLICATION_JSON_VALUE)
+	@GetMapping(path = "/get/All/CreditOffer", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<CreditOffer>> getAllCreditOffer() {
 		try {
 			List<CreditOffer> creditOfferList = creditOfferService.getAllCreditOffers();

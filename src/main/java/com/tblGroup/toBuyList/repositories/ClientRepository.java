@@ -2,6 +2,7 @@ package com.tblGroup.toBuyList.repositories;
 
 
 import com.tblGroup.toBuyList.models.Client;
+import com.tblGroup.toBuyList.models.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

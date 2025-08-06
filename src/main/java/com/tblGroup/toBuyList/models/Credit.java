@@ -37,11 +37,15 @@ public class Credit {
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	
+	@OneToOne
+	@JoinColumn(name = "credit_offer", nullable = false)
+	private CreditOffer creditOffer;
+	
 	public Credit() {
 	
 	}
 	
-	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int creditOfferID, int receiverAccountID, int walletReceiverID, Client client) {
+	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int creditOfferID, int receiverAccountID, int walletReceiverID, Client client, CreditOffer creditOffer) {
 		this.description = description;
 		this.dateCredit = dateCredit;
 		this.timeCredit = timeCredit;
@@ -49,6 +53,7 @@ public class Credit {
 		this.receiverAccountID = receiverAccountID;
 		this.walletReceiverID = walletReceiverID;
 		this.client = client;
+		this.creditOffer = creditOffer;
 	}
 	
 	public int getId() {
@@ -109,5 +114,13 @@ public class Credit {
 	
 	public void setClient(Client client) {
 		this.client = client;
+	}
+	
+	public CreditOffer getCreditOffer() {
+		return creditOffer;
+	}
+	
+	public void setCreditOffer(CreditOffer creditOffer) {
+		this.creditOffer = creditOffer;
 	}
 }

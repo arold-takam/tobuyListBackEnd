@@ -10,4 +10,5 @@ public interface WalletRepository extends JpaRepository<Wallet, Integer> {
     boolean existsByWalletNumber(String walletNumber);
 
     Wallet findByWalletNumber(String walletNumber);
+    
 }

@@ -89,6 +89,8 @@ public class ClientService {
 		walletRepository.deleteById(optionalClient.get().getWallet().getId());
 
 	}
+	
+//	------------------------------------------------------------------------------------------------------------------
 
 	private String autoGenerateAWalletNumber(){
 		String walletNumber;
