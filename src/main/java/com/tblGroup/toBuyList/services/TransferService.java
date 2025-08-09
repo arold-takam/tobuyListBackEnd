@@ -34,33 +34,32 @@ public class TransferService {
         Wallet wallet = client.getWallet();
 
        if(transferDTO.amount() <=0 || transferDTO.amount() > wallet.getAmount()){
+           setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "FAILED", client);
              throw new Exception("amount is incorrect");
         }
 
         if(receiverAccount != null){
 
-            Transfer transfer = new Transfer();
-            transfer.setAmount(transferDTO.amount());
-            transfer.setDescription(transferDTO.description());
-            transfer.setReceiverAccountNumber(transferDTO.phone());
-            transfer.setWalletNumber(null);
-            transfer.setDateTransfer(new Date(System.currentTimeMillis()));
-            transfer.setTypeTransfer(typeTransfer);
-            transfer.setClient(client);
+            Transfer transfer = new Transfer(
+                    transferDTO.amount(),
+                    transferDTO.description(),
+                    null,
+                    transferDTO.phone(),
+                    new Date(System.currentTimeMillis()),
+                    typeTransfer,
+                    client
+            );
 
             receiverAccount.setAmount(receiverAccount.getAmount() + transferDTO.amount());
             wallet.setAmount(wallet.getAmount() - transferDTO.amount());
 
-            History history= new History();
-            history.setAction(""+typeTransfer);
-            history.setDescription("Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone());
-            history.setDateAction(new Date(System.currentTimeMillis()));
-            history.setClient(client);
+
+            setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "SUCCESS", client);
 
             walletRepository.save(wallet);
             moneyAccountRepository.save(receiverAccount);
             transferRepository.save(transfer);
-            historyRepository.save(history);
+
 
         }else{
             throw new IllegalArgumentException("Account not found");
@@ -83,9 +82,11 @@ public class TransferService {
 
         if(!walletReceiver.getWalletNumber().equals(wallet.getWalletNumber())){
             if(transferDTO2.amount() < 0){
+                setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
                 throw new Exception("Invalid amount");
             }
             if(transferDTO2.amount() > wallet.getAmount()){
+                setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
                 throw new Exception("amount is insufficient");
             }
 
@@ -94,28 +95,32 @@ public class TransferService {
             walletRepository.save(walletReceiver);
             walletRepository.save(wallet);
 
-            Transfer transfer = new Transfer();
-            transfer.setAmount(transferDTO2.amount());
-            transfer.setDescription(transferDTO2.description());
-            transfer.setReceiverAccountNumber(null);
-            transfer.setWalletNumber(transferDTO2.walletNumber());
-            transfer.setDateTransfer(new Date(System.currentTimeMillis()));
-            transfer.setTypeTransfer(typeTransfer);
-            transfer.setClient(client);
+            Transfer transfer = new Transfer(
+                    transferDTO2.amount(),
+                    transferDTO2.description(),
+                    null,
+                    transferDTO2.walletNumber(),
+                    new Date(System.currentTimeMillis()),
+                    typeTransfer,
+                    client
+            );
+
             transferRepository.save(transfer);
 
-            History history= new History();
-            history.setAction(""+typeTransfer);
-            history.setDescription("Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber());
-            history.setDateAction(new Date(System.currentTimeMillis()));
-            history.setClient(client);
-            historyRepository.save(history);
+
+            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "SUCCESS", client);
 
 
         }else{
             throw new Exception("This transaction is forbidden ");
         }
 
+    }
+
+    private void setHistory(String action, String description, String status, Client client){
+        History history = new History(action, description, new Date(System.currentTimeMillis()), status, client);
+
+        historyRepository.save(history);
     }
 
 }

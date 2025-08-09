@@ -16,7 +16,7 @@ public class MoneyAccount {
 	@Column(name = "name", nullable = false)
 	private MoneyAccountName name;
 	
-	@Column(name = "phone", unique = true, nullable = false)
+	@Column(name = "phone", unique = true, nullable = false, length= 9)
 	private String phone;
 	
 	@Column(name = "password",  nullable = false)
