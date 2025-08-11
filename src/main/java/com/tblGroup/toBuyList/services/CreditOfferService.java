@@ -44,9 +44,8 @@ public class CreditOfferService {
 	}
 	
 	public List<CreditOffer> getAllCreditOffers() {
-		List<CreditOffer> creditOfferList = creditOfferRepository.findAll();
-		
-		return creditOfferList;
+
+        return creditOfferRepository.findAll();
 	}
 	
 	public void updateCreditOffer(int creditOfferID, TitleCreditOffer newTitleCreditOffer, CreditOfferRequestDTO creditOfferRequestDTO) {

@@ -46,13 +46,16 @@ public class DepositService {
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositDTO.phoneMAccount());
 		
 		if (moneyAccount == null) {
+			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
 			throw new IllegalArgumentException("Money Account with phone number: " + depositDTO.phoneMAccount() + " not found.");
 		}
 		
 		if (depositDTO.amount() <= 0.0){
+			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
 			throw new Exception("This amount is invalid, please try again.");
 		}
 		if (moneyAccount.getAmount() < depositDTO.amount()){
+			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
 			throw new Exception("Your account "+moneyAccount.getName()+" has no sufficient amount for this deposit, please reload it. it balance is: "+moneyAccount.getAmount());
 		}
 		
@@ -75,14 +78,7 @@ public class DepositService {
 		
 		depositRepository.save(deposit);
 
-		History history = new History();
-
-		history.setAction("DEPOSIT");
-		history.setDescription("Deposit of "+depositDTO.amount());
-		history.setDateAction(new Date(System.currentTimeMillis()));
-		history.setClient(client);
-
-		historyRepository.save(history);
+		setHistory("Deposit of "+depositDTO.amount(), "SUCCESS", client);
 	}
 	
 	public Deposit getDeposit(int clientID, int depositID){
@@ -114,10 +110,16 @@ public class DepositService {
 		
 		List<Deposit>listDeposit = depositRepository.findAllByClientId(clientID);
 		if (listDeposit.isEmpty()){
-			throw new IllegalArgumentException(client.getName()+"   has made no deposit yet.");
+			throw new IllegalArgumentException(client.getName()+" has made no deposit yet.");
 		}
 		
 		return listDeposit;
+	}
+
+	private void setHistory(String description, String status, Client client){
+		History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
+
+		historyRepository.save(history);
 	}
 	
 }

@@ -21,14 +21,19 @@ public class History {
     @Column(name= "date_action")
     private Date dateAction;
 
+    @Column(name= "status")
+    private String status;
+
     @ManyToOne()
     @JoinColumn(name="client_id")
     private Client client;
 
-    public History(String action, String description, Date dateAction, Client client) {
+
+    public History(String action, String description, Date dateAction, String status, Client client) {
         this.action = action;
         this.description = description;
         this.dateAction = dateAction;
+        this.status = status;
         this.client = client;
     }
 
@@ -75,4 +80,14 @@ public class History {
     public void setClient(Client client) {
         this.client = client;
     }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+
 }

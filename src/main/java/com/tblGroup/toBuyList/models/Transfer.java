@@ -29,22 +29,25 @@ public class Transfer {
     @Column(name="date_transfer")
     private Date dateTransfer;
 
-    @ManyToOne()
-    @JoinColumn(name="client_id")
-    private Client client;
-
     @Enumerated(EnumType.ORDINAL)
     @Column(name="type_transfer")
     private TypeTransfer typeTransfer;
 
-    public Transfer(double amount, String description, String receiverAccountNumber, String walletNumber, Date dateTransfer, Client client, TypeTransfer typeTransfer) {
+    @ManyToOne()
+    @JoinColumn(name="client_id")
+    private Client client;
+
+
+
+    public Transfer(double amount, String description, String receiverAccountNumber, String walletNumber, Date dateTransfer, TypeTransfer typeTransfer, Client client) {
         this.amount = amount;
         this.description = description;
         this.receiverAccountNumber = receiverAccountNumber;
         this.walletNumber = walletNumber;
         this.dateTransfer = dateTransfer;
-        this.client = client;
         this.typeTransfer = typeTransfer;
+        this.client = client;
+
     }
 
     public Transfer() {

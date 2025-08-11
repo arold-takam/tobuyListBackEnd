@@ -42,6 +42,10 @@ public class MoneyAccountService {
 			throw new IllegalArgumentException("this number phone already exists");
 		}
 
+		if(moneyAccount.phone().length() != 9){
+			throw new IllegalArgumentException("Invalid number phone");
+		}
+
 		Client client = optionalClient.get();
 		MoneyAccount moneyAccountAdded = new MoneyAccount();
 		moneyAccountAdded.setName(moneyAccountName);
@@ -61,10 +65,8 @@ public class MoneyAccountService {
 			}
 			
 			Hibernate.initialize(moneyAccount.getClient());
-		
-			MoneyAccountResponseDTO moneyAccountResponseDTO = new MoneyAccountResponseDTO(mAccountID, moneyAccount.getName(), moneyAccount.getPhone(), moneyAccount.getPassword(), moneyAccount.getAmount());
-			
-			return moneyAccountResponseDTO;
+
+        return new MoneyAccountResponseDTO(mAccountID, moneyAccount.getName(), moneyAccount.getPhone(), moneyAccount.getPassword(), moneyAccount.getAmount());
 		}
 		
 	public List<MoneyAccountResponseDTO>getAllAccounts(int clientID){
