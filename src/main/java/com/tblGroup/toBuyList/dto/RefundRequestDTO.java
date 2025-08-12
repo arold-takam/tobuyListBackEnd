@@ -6,6 +6,6 @@ import com.tblGroup.toBuyList.models.MoneyAccount;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public record RefundRequestDTO(String description, int creditID, int moneyAccountID, double amount) {
+public record RefundRequestDTO(String description, int creditID, int accountID, double amount) {
 
 }

@@ -21,7 +21,7 @@ public class Refund {
 	private Credit credit;
 	
 	@OneToOne
-	@JoinColumn(name = "money_account_id", nullable = false)
+	@JoinColumn(name = "money_account_id")
 	private MoneyAccount moneyAccount;
 	
 	@Column(name = "date_refund")

@@ -6,7 +6,6 @@ import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.Deposit;
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
-import com.tblGroup.toBuyList.models.History;
 import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
