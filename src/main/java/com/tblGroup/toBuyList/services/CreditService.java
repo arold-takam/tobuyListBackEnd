@@ -73,6 +73,7 @@ public class CreditService {
 		credit.setDescription(creditRequest1DTO.description());
 		credit.setDateCredit(LocalDate.now());
 		credit.setTimeCredit(LocalTime.now());
+		credit.setAmountRefund(0);
 		credit.setClient(client);
 		credit.setCreditOffer(creditOffer);
 		
@@ -119,6 +120,7 @@ public class CreditService {
 		credit.setDescription(creditRequest2DTO.description());
 		credit.setDateCredit(LocalDate.now());
 		credit.setTimeCredit(LocalTime.now());
+		credit.setAmountRefund(0);
 		credit.setClient(client);
 		credit.setCreditOffer(creditOffer);
 		

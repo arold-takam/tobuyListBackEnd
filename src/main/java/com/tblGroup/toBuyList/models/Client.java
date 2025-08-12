@@ -30,7 +30,8 @@ public class Client {
 	@OneToOne()
 	@JoinColumn(name = "wallet")
 	private Wallet wallet;
-
+	private boolean blocked;
+	
 	public Client() {
 	}
 	
@@ -87,4 +88,12 @@ public class Client {
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
     }
+	
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
+	}
+	
+	public boolean isBlocked() {
+		return blocked;
+	}
 }

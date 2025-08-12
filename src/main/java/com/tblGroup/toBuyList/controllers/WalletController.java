@@ -76,6 +76,7 @@ public class WalletController {
             System.out.printf("%s", e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+            System.out.printf("%s", e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
