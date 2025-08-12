@@ -24,14 +24,14 @@ public class Credit {
 	@Column(name = "time_credit", nullable = false)
 	LocalTime timeCredit;
 	
-	@Column(name = "credit_offer_id")
-	private int creditOfferID;
-	
 	@Column(name = "receiver_account")
 	private int receiverAccountID;
 	
 	@Column(name = "wallet_receiver")
 	private int walletReceiverID;
+	
+	@Column(name = "amountRefund")
+	private double amountRefund;
 	
 	@OneToOne
 	@JoinColumn(name = "client_id", nullable = false)
@@ -45,13 +45,13 @@ public class Credit {
 	
 	}
 	
-	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int creditOfferID, int receiverAccountID, int walletReceiverID, Client client, CreditOffer creditOffer) {
+	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int receiverAccountID, int walletReceiverID, double amountToRefund, Client client, CreditOffer creditOffer) {
 		this.description = description;
 		this.dateCredit = dateCredit;
 		this.timeCredit = timeCredit;
-		this.creditOfferID = creditOfferID;
 		this.receiverAccountID = receiverAccountID;
 		this.walletReceiverID = walletReceiverID;
+		this.amountRefund = amountRefund;
 		this.client = client;
 		this.creditOffer = creditOffer;
 	}
@@ -84,14 +84,6 @@ public class Credit {
 		this.timeCredit = timeCredit;
 	}
 	
-	public int getCreditOfferID() {
-		return creditOfferID;
-	}
-	
-	public void setCreditOfferID(int creditOfferID) {
-		this.creditOfferID = creditOfferID;
-	}
-	
 	public int getReceiverAccountID() {
 		return receiverAccountID;
 	}
@@ -106,6 +98,14 @@ public class Credit {
 	
 	public void setWalletReceiverID(int walletReceiverID) {
 		this.walletReceiverID = walletReceiverID;
+	}
+	
+	public double getAmountRefund() {
+		return amountRefund;
+	}
+	
+	public void setAmountRefund(double amountRefund) {
+		this.amountRefund = amountRefund;
 	}
 	
 	public Client getClient() {
