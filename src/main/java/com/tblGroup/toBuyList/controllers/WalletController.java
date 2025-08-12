@@ -115,6 +115,19 @@ public class WalletController {
             return ResponseEntity.ok(history);
 
         }catch(IllegalArgumentException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/history/delete/{clientID}")
+    public ResponseEntity<Void> deleteHistory(@PathVariable int clientID){
+        try{
+            historyService.deleteHistory(clientID);
+            return ResponseEntity.noContent().build();
+
+        }catch(IllegalArgumentException e){
+            System.out.println(e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

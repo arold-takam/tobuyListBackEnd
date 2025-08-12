@@ -11,4 +11,6 @@ import java.util.List;
 public interface HistoryRepository extends JpaRepository<History, Integer> {
 
     List<History> findAllByClient(Client client);
+
+    void deleteAllByClient(Client client);
 }
