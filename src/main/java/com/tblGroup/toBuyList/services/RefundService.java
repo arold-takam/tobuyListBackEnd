@@ -129,7 +129,7 @@ public class RefundService {
 		
 		refund.setDescription(dto.description());
 		refund.setCredit(credit);
-		refund.setMoneyAccount(null);
+		refund.setMoneyAccountNumber(" ");
 		refund.setDateRefund(LocalDate.now());
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(amountToRefund);
@@ -145,6 +145,10 @@ public class RefundService {
 		System.out.println("⏳ Délai restant : " + remainingDays + " jours");
 		
 		if (refund.closesCredit()) {
+			credit.setActive(false);
+			creditRepository.save(credit);
+			
+			
 			System.out.println("✅ Crédit entièrement remboursé.");
 			// Tu peux ici déclencher une notification ou archiver le crédit
 		} else {
@@ -193,8 +197,11 @@ public class RefundService {
 			throw new IllegalArgumentException("Refund exceeds the credit limit.");
 		}
 		
-		MoneyAccount account = moneyAccountRepository.findById(refundRequestByMoneyAccountDTO.moneyAccountID())
-			.orElseThrow(() -> new IllegalArgumentException("This money account does not exist"));
+		MoneyAccount account = moneyAccountRepository.findByPhone(refundRequestByMoneyAccountDTO.moneyAccountNumber());
+		
+		if (account == null) {
+			throw new  IllegalArgumentException("This money account does not exist");
+		}
 		
 		// Déduction du compte
 		if (account.getAmount() < amountToRefund) {
@@ -212,7 +219,7 @@ public class RefundService {
 		Refund refund = new Refund();
 		refund.setDescription(refundRequestByMoneyAccountDTO.description());
 		refund.setCredit(credit);
-		refund.setMoneyAccount(account);
+		refund.setMoneyAccountNumber(account.getPhone());
 		refund.setDateRefund(LocalDate.now());
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(amountToRefund);
@@ -228,6 +235,9 @@ public class RefundService {
 		System.out.println("⏳ Délai restant : " + remainingDays + " jours");
 		
 		if (refund.closesCredit()) {
+			credit.setActive(false);
+			creditRepository.save(credit);
+			
 			System.out.println("✅ Crédit entièrement remboursé.");
 			// Tu peux ici déclencher une notification ou archiver le crédit
 		} else {
@@ -246,8 +256,11 @@ public class RefundService {
 		// Blocage du client
 		credit.getClient().setBlocked(true);
 		
-		MoneyAccount account = moneyAccountRepository.findById(refundRequestByMoneyAccountDTO.moneyAccountID())
-			.orElseThrow(() -> new IllegalArgumentException("This money account does not exist"));
+		MoneyAccount account = moneyAccountRepository.findByPhone(refundRequestByMoneyAccountDTO.moneyAccountNumber());
+		
+		if (account == null) {
+			throw new  IllegalArgumentException("This money account does not exist");
+		}
 		
 		// Déduction du compte
 		if (account != null) {
@@ -261,11 +274,11 @@ public class RefundService {
 			
 			System.out.println("💰 Prélèvement automatique effectué : " + totalToRefund);
 			
-			refundRequestByMoneyAccountDTO = new RefundRequestByMoneyAccountDTO(refundRequestByMoneyAccountDTO.description(), refundRequestByMoneyAccountDTO.moneyAccountID(), penalty);
+			refundRequestByMoneyAccountDTO = new RefundRequestByMoneyAccountDTO(refundRequestByMoneyAccountDTO.description(), refundRequestByMoneyAccountDTO.moneyAccountNumber(), penalty);
 		} else {
 			refundRequestByMoneyAccountDTO = new RefundRequestByMoneyAccountDTO(
 				refundRequestByMoneyAccountDTO.description(),
-				refundRequestByMoneyAccountDTO.moneyAccountID(),
+				refundRequestByMoneyAccountDTO.moneyAccountNumber(),
 				totalToRefund
 			);
 			

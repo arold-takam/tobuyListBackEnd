@@ -20,9 +20,8 @@ public class Refund {
 	@JoinColumn(name = "credit_id", nullable = false)
 	private Credit credit;
 	
-	@OneToOne
-	@JoinColumn(name = "money_account_id")
-	private MoneyAccount moneyAccount;
+	@Column(name = "money_account_number")
+	private String moneyAccountNumber;
 	
 	@Column(name = "date_refund")
 	private LocalDate dateRefund;
@@ -39,10 +38,10 @@ public class Refund {
 	public Refund() {
 	}
 	
-	public Refund(String description, Credit credit, MoneyAccount moneyAccount, LocalDate dateRefund, LocalTime timeRefund, double amount, boolean ended) {
+	public Refund(String description, Credit credit, String moneyAccountNumber, LocalDate dateRefund, LocalTime timeRefund, double amount, boolean ended) {
 		this.description = description;
 		this.credit = credit;
-		this.moneyAccount = moneyAccount;
+		this.moneyAccountNumber = moneyAccountNumber;
 		this.dateRefund = dateRefund;
 		this.timeRefund = timeRefund;
 		this.amount = amount;
@@ -69,16 +68,16 @@ public class Refund {
 		this.credit = credit;
 	}
 	
-	public MoneyAccount getMoneyAccount() {
-		return moneyAccount;
-	}
-	
-	public void setMoneyAccount(MoneyAccount moneyAccount) {
-		this.moneyAccount = moneyAccount;
-	}
-	
 	public LocalDate getDateRefund() {
 		return dateRefund;
+	}
+	
+	public String getMoneyAccountNumber() {
+		return moneyAccountNumber;
+	}
+	
+	public void setMoneyAccountNumber(String moneyAccountNumber) {
+		this.moneyAccountNumber = moneyAccountNumber;
 	}
 	
 	public void setDateRefund(LocalDate dateRefund) {

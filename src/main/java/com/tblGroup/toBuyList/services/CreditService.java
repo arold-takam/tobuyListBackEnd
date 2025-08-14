@@ -38,10 +38,14 @@ public class CreditService {
 		
 		Client client = clientService.getClientById(clientSenderID);
 		
-		if (creditRepository.findByClient(client).isPresent()) {
-			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
-			
-			throw new IllegalArgumentException("Client already has a credit");
+		List<Credit>creditList = creditRepository.findAllByClient(client);
+		
+		if (!creditList.isEmpty()) {
+			Credit lastCredit = creditList.getLast();
+			if (lastCredit.isActive()) {
+				setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				throw new IllegalArgumentException("Client already has an active credit");
+			}
 		}
 		
 		MoneyAccount moneyAccountReceiver = moneyAccountRepository.findByPhone(creditRequest1DTO.receiverAccountPhone());
@@ -71,6 +75,7 @@ public class CreditService {
 		credit.setDateCredit(LocalDate.now());
 		credit.setTimeCredit(LocalTime.now());
 		credit.setAmountRefund(0);
+		credit.setActive(true);
 		credit.setClient(client);
 		credit.setCreditOffer(creditOffer);
 		
@@ -82,10 +87,14 @@ public class CreditService {
 		
 		Client client = clientService.getClientById(clientSenderID);
 		
-		if (creditRepository.findByClient(client).isPresent()) {
-			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
-			
-			throw new IllegalArgumentException("Client already has a credit");
+		List<Credit>creditList = creditRepository.findAllByClient(client);
+		
+		if (!creditList.isEmpty()) {
+			Credit lastCredit = creditList.getLast();
+			if (lastCredit.isActive()) {
+				setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				throw new IllegalArgumentException("Client already has an active credit");
+			}
 		}
 
 		Wallet walletSender = client.getWallet();
@@ -120,6 +129,7 @@ public class CreditService {
 		credit.setDateCredit(LocalDate.now());
 		credit.setTimeCredit(LocalTime.now());
 		credit.setAmountRefund(0);
+		credit.setActive(true);
 		credit.setClient(client);
 		credit.setCreditOffer(creditOffer);
 		

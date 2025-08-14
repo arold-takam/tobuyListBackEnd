@@ -33,6 +33,9 @@ public class Credit {
 	@Column(name = "amountRefund")
 	private double amountRefund;
 	
+	@Column(name = "is_active")
+	private boolean active;
+	
 	@OneToOne
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
@@ -45,12 +48,13 @@ public class Credit {
 	
 	}
 	
-	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int receiverAccountID, int walletReceiverID, double amountToRefund, Client client, CreditOffer creditOffer) {
+	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int receiverAccountID, int walletReceiverID, double amountToRefund, boolean active, Client client, CreditOffer creditOffer) {
 		this.description = description;
 		this.dateCredit = dateCredit;
 		this.timeCredit = timeCredit;
 		this.receiverAccountID = receiverAccountID;
 		this.walletReceiverID = walletReceiverID;
+		this.active = active;
 		this.amountRefund = amountRefund;
 		this.client = client;
 		this.creditOffer = creditOffer;
@@ -106,6 +110,14 @@ public class Credit {
 	
 	public void setAmountRefund(double amountRefund) {
 		this.amountRefund = amountRefund;
+	}
+	
+	public boolean isActive() {
+		return active;
+	}
+	
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 	
 	public Client getClient() {
