@@ -49,13 +49,14 @@ public class CreditController {
 			creditService.makeCreditToWallet(clientSenderID, creditOfferTitle, creditRequest2DTO);
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
-		}catch (IllegalArgumentException e){
+		}catch (IllegalArgumentException e) {
 			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}catch (Exception e) {
-			System.out.println(e.getMessage());
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
+//		}catch (Exception e) {
+//			System.out.println(e.getMessage());
+//			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//		}
 	}
 	
 	

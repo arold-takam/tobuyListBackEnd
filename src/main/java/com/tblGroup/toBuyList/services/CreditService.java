@@ -21,15 +21,17 @@ public class CreditService {
 	private final ClientService clientService;
 	private final CreditOfferService creditOfferService;
 	private final HistoryRepository historyRepository;
+	private final RefundService refundService;
 	
-	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository) {
+	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository, RefundService refundService) {
 		this.creditRepository = creditRepository;
 		this.clientService = clientService;
 		this.creditOfferService = creditOfferService;
         this.moneyAccountRepository = moneyAccountRepository;
         this.walletRepository = walletRepository;
         this.historyRepository = historyRepository;
-    }
+		this.refundService = refundService;
+	}
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
 	public void makeCreditToMoneyAccount(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest1DTO creditRequest1DTO) {
@@ -38,13 +40,8 @@ public class CreditService {
 		
 		if (creditRepository.findByClient(client).isPresent()) {
 			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			
 			throw new IllegalArgumentException("Client already has a credit");
-		}
-		
-		Wallet walletSender = client.getWallet();
-		
-		if (walletSender == null) {
-			throw new IllegalArgumentException("This client has no wallet yet");
 		}
 		
 		MoneyAccount moneyAccountReceiver = moneyAccountRepository.findByPhone(creditRequest1DTO.receiverAccountPhone());
@@ -87,6 +84,7 @@ public class CreditService {
 		
 		if (creditRepository.findByClient(client).isPresent()) {
 			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			
 			throw new IllegalArgumentException("Client already has a credit");
 		}
 
@@ -116,6 +114,7 @@ public class CreditService {
 		}
 
 		Credit credit = new Credit();
+		
 		credit.setWalletReceiverID(walletReceiver.getId());
 		credit.setDescription(creditRequest2DTO.description());
 		credit.setDateCredit(LocalDate.now());

@@ -30,6 +30,7 @@ public class Client {
 	@OneToOne()
 	@JoinColumn(name = "wallet")
 	private Wallet wallet;
+	
 	private boolean blocked;
 	
 	public Client() {
