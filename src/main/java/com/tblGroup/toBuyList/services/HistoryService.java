@@ -13,15 +13,15 @@ import java.util.List;
 @Service
 public class HistoryService {
     private final HistoryRepository historyRepository;
-    private final ClientRepository clientRepository;
+    private final ClientService clientService;
 
-    public HistoryService(HistoryRepository historyRepository, ClientRepository clientRepository) {
+    public HistoryService(HistoryRepository historyRepository, ClientRepository clientRepository, ClientService clientService) {
         this.historyRepository = historyRepository;
-        this.clientRepository = clientRepository;
+        this.clientService = clientService;
     }
 
     public List<HistoryResponse> getHistory(int clientId) {
-        Client client = clientRepository.findById(clientId).orElseThrow(() -> new IllegalArgumentException("client not found"));
+        Client client = clientService.getClientById(clientId);
 
         List<History> listHistory = historyRepository.findAllByClient(client);
         List<HistoryResponse> listHistoryResponse = new ArrayList<>();
@@ -30,13 +30,21 @@ public class HistoryService {
             HistoryResponse historyResponse = new HistoryResponse(
                     history.getAction(),
                     history.getDescription(),
-                    history.getDateAction()
+                    history.getDateAction(),
+                    history.getStatus()
             );
             listHistoryResponse.add(historyResponse);
         }
 
         return listHistoryResponse;
 
+
+    }
+
+    public void deleteHistory(int clientId){
+        Client client = clientService.getClientById(clientId);
+
+        historyRepository.deleteAllByClient(client);
 
     }
 }

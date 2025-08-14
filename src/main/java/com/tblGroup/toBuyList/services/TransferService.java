@@ -77,6 +77,7 @@ public class TransferService {
         Wallet walletReceiver = walletRepository.findByWalletNumber(transferDTO2.walletNumber());
 
         if(walletReceiver == null){
+            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
             throw new IllegalArgumentException("This wallet account not found");
         }
 
@@ -112,6 +113,7 @@ public class TransferService {
 
 
         }else{
+            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
             throw new Exception("This transaction is forbidden ");
         }
 
