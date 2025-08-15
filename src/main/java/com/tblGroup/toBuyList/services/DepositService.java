@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -19,16 +20,19 @@ public class DepositService {
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final HistoryRepository historyRepository;
-
+	private final CreditRepository creditRepository;
+	private final RefundRepository refundRepository;
 	
 	
-	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryRepository historyRepository) {
+	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryRepository historyRepository, CreditRepository creditRepository, RefundRepository refundRepository) {
 		this.clientRepository = clientRepository;
 		this.walletRepository = walletRepository;
 		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
         this.historyRepository = historyRepository;
-    }
+		this.creditRepository = creditRepository;
+		this.refundRepository = refundRepository;
+	}
 	
 //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
@@ -54,9 +58,65 @@ public class DepositService {
 			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
 			throw new Exception("This amount is invalid, please try again.");
 		}
+		
 		if (moneyAccount.getAmount() < depositDTO.amount()){
 			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
 			throw new Exception("Your account "+moneyAccount.getName()+" has no sufficient amount for this deposit, please reload it. it balance is: "+moneyAccount.getAmount());
+		}
+		
+		
+		double amountToRefund;
+		
+		
+		Refund lastRefund= refundRepository.findAllByCredit_Client(client).getLast();
+		
+		if (lastRefund != null) {
+			if (!lastRefund.closesCredit()) {
+				Credit lastCredit = creditRepository.findAllByClient(client).getLast();
+				
+				if (lastCredit == null) {
+					throw new IllegalArgumentException("This credit is not found.");
+				}
+				
+				LocalDate dateCredit = lastCredit.getDateCredit();
+				LocalDate dateRefund = lastRefund.getDateRefund();
+				int creditDelay = lastCredit.getCreditOffer().getCreditDelay();
+				
+				long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
+				
+				if ((creditDelay - realDelay) <= 0){
+					System.out.println("You will take a penalty of 80% on your next deposits cause of your last credit witch exceed the delay.");
+					
+					amountToRefund  = depositDTO.amount() * 0.2;
+					
+					lastCredit.setAmountRefund(lastCredit.getAmountRefund() + amountToRefund);
+					creditRepository.save(lastCredit);
+					
+					Deposit deposit = new Deposit();
+					
+					deposit.setAmount(depositDTO.amount() - amountToRefund);
+					deposit.setDescription(depositDTO.description());
+					
+					moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
+					deposit.setmAccountNumber(depositDTO.phoneMAccount());
+					
+					clientWallet.setAmount(clientWallet.getAmount() + depositDTO.amount());
+					deposit.setClient(client);
+					
+					deposit.setDateDeposit(LocalDate.now());
+					deposit.setTimeDeposit(LocalTime.now());
+					
+					moneyAccountRepository.save(moneyAccount);
+					walletRepository.save(clientWallet);
+					
+					depositRepository.save(deposit);
+					
+					setHistory("Deposit of "+depositDTO.amount(), "SUCCESS", client);
+					
+					return;
+				}
+				
+			}
 		}
 		
 		Deposit deposit = new Deposit();

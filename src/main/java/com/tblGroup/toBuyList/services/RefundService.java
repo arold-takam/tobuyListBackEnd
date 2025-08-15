@@ -48,7 +48,7 @@ public class RefundService {
 		if (realDelay <= creditDelay) {
 			refundPromptlyByWallet(credit, requestByWalletDTO);
 		} else {
-			refundWithTaxByWallet(credit, requestByWalletDTO, realDelay - creditDelay);
+			throw new IllegalArgumentException("This refund is not possible, you have a penaty for your credit. A tax will be applied.");
 		}
 	}
 	
@@ -66,7 +66,7 @@ public class RefundService {
 		if (realDelay <= creditDelay) {
 			refundPromptlyByMoneyAccount(credit, refundRequestByMoneyAccountDTO);
 		} else {
-			refundWithTaxByMoneyAccount(credit, refundRequestByMoneyAccountDTO, realDelay - creditDelay);
+			throw new IllegalArgumentException("This refund is not possible, you have a penaty for your credit. A tax will be applied.");
 		}
 	}
 
@@ -114,6 +114,44 @@ public class RefundService {
 				throw new IllegalArgumentException("Insufficient wallet balance.");
 			}
 			
+			LocalDate dateCredit = credit.getDateCredit();
+			LocalDate dateRefund = LocalDate.now();
+			int creditDelay = credit.getCreditOffer().getCreditDelay();
+			
+			long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
+			
+			if ((creditDelay - realDelay) <= 0){
+				double penalty = amountToRefund  *  credit.getCreditOffer().getTaxAfterDelay() * realDelay;
+				
+				wallet.setAmount(wallet.getAmount() - penalty);
+				walletRepository.save(wallet);
+				
+				credit.setAmountRefund(credit.getAmountRefund() + penalty);
+				creditRepository.save(credit);
+				
+				// Création du remboursement
+				Refund refund = new Refund();
+				
+				refund.setDescription(dto.description());
+				refund.setCredit(credit);
+				refund.setMoneyAccountNumber(" ");
+				refund.setDateRefund(LocalDate.now());
+				refund.setTimeRefund(LocalTime.now());
+				refund.setAmount(penalty);
+				refund.setEnded(totalAfterRefund + penalty == creditLimit);
+				
+				refundRepository.save(refund);
+				
+				// Affichage du statut
+				double remainingAmount = creditLimit - totalAfterRefund + penalty;
+				long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
+				
+				System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
+				System.out.println("⏳ Délai restant : " + remainingDays + " jours");
+				
+				return;
+			}
+			
 			wallet.setAmount(wallet.getAmount() - amountToRefund);
 			walletRepository.save(wallet);
 		} else {
@@ -156,35 +194,6 @@ public class RefundService {
 		}
 	}
 	
-	private void refundWithTaxByWallet(Credit credit, RefundRequestByWalletDTO dto,long delayDays) {
-		double baseAmount = dto.amount();
-		float penaltyRate = credit.getCreditOffer().getTaxAfterDelay(); // ex: 0.05 pour 5%
-		double penalty = baseAmount * penaltyRate * delayDays;
-		double totalToRefund = baseAmount + penalty;
-		
-		System.out.println("⚠️ Remboursement en retard. Pénalité appliquée : " + penalty);
-		
-		
-		Wallet wallet = credit.getClient().getWallet();
-		double autoDeduct = totalToRefund * 0.80;
-		
-		// Déduction du compte
-		if (wallet != null) {
-			if (wallet.getAmount() < autoDeduct) {
-				throw new IllegalArgumentException("Solde insuffisant pour prélèvement automatique.");
-			}
-			
-			wallet.setAmount(wallet.getAmount() - autoDeduct);
-			walletRepository.save(wallet);
-			
-			System.out.println("💰 Prélèvement automatique effectué : " + autoDeduct);
-			dto = new RefundRequestByWalletDTO(dto.description(),  autoDeduct);
-		} else {
-			dto = new RefundRequestByWalletDTO(dto.description(),  totalToRefund);
-		}
-		
-		refundPromptlyByWallet(credit, dto);
-	}
 	
 	private void refundPromptlyByMoneyAccount(Credit credit, RefundRequestByMoneyAccountDTO refundRequestByMoneyAccountDTO) {
 		double amountToRefund = refundRequestByMoneyAccountDTO.amount();
@@ -205,6 +214,48 @@ public class RefundService {
 		if (account.getAmount() < amountToRefund) {
 			throw new IllegalArgumentException("Insufficient account balance.");
 		}
+		
+		
+		
+		LocalDate dateCredit = credit.getDateCredit();
+		LocalDate dateRefund = LocalDate.now();
+		int creditDelay = credit.getCreditOffer().getCreditDelay();
+		
+		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
+		
+		if ((creditDelay - realDelay) <= 0){
+			double penalty = amountToRefund  *  credit.getCreditOffer().getTaxAfterDelay() * realDelay;
+			
+			account.setAmount(account.getAmount() - penalty);
+			moneyAccountRepository.save(account);
+			
+			credit.setAmountRefund(credit.getAmountRefund() + penalty);
+			creditRepository.save(credit);
+			
+			// Création du remboursement
+			Refund refund = new Refund();
+			
+			refund.setDescription(refundRequestByMoneyAccountDTO.description());
+			refund.setCredit(credit);
+			refund.setMoneyAccountNumber(" ");
+			refund.setDateRefund(LocalDate.now());
+			refund.setTimeRefund(LocalTime.now());
+			refund.setAmount(penalty);
+			refund.setEnded(totalAfterRefund + penalty == creditLimit);
+			
+			refundRepository.save(refund);
+			
+			// Affichage du statut
+			double remainingAmount = creditLimit - totalAfterRefund + penalty;
+			long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
+			
+			System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
+			System.out.println("⏳ Délai restant : " + remainingDays + " jours");
+			
+			return;
+		}
+		
+		
 		
 		account.setAmount(account.getAmount() - amountToRefund);
 		moneyAccountRepository.save(account);
@@ -241,46 +292,6 @@ public class RefundService {
 		} else {
 			System.out.println("Refund successfully processed.");
 		}
-	}
-	
-	private void refundWithTaxByMoneyAccount(Credit credit, RefundRequestByMoneyAccountDTO refundRequestByMoneyAccountDTO, long delayDays) {
-		double baseAmount = refundRequestByMoneyAccountDTO.amount();
-		float penaltyRate = credit.getCreditOffer().getTaxAfterDelay(); // ex: 0.05 pour 5%
-		double penalty = baseAmount * penaltyRate * delayDays;
-		double totalToRefund = baseAmount + penalty;
-		
-		System.out.println("⚠️ Remboursement en retard. Pénalité appliquée : " + penalty);
-		
-		
-		MoneyAccount account = moneyAccountRepository.findByPhone(refundRequestByMoneyAccountDTO.moneyAccountNumber());
-		
-		if (account == null) {
-			throw new  IllegalArgumentException("This money account does not exist");
-		}
-		
-		// Déduction du compte
-		if (account != null) {
-			
-			if (account.getAmount() < totalToRefund) {
-				throw new IllegalArgumentException("Insufficient account balance.");
-			}
-			
-			account.setAmount(account.getAmount() - totalToRefund);
-			moneyAccountRepository.save(account);
-			
-			System.out.println("💰 Prélèvement automatique effectué : " + totalToRefund);
-			
-			refundRequestByMoneyAccountDTO = new RefundRequestByMoneyAccountDTO(refundRequestByMoneyAccountDTO.description(), refundRequestByMoneyAccountDTO.moneyAccountNumber(), penalty);
-		} else {
-			refundRequestByMoneyAccountDTO = new RefundRequestByMoneyAccountDTO(
-				refundRequestByMoneyAccountDTO.description(),
-				refundRequestByMoneyAccountDTO.moneyAccountNumber(),
-				totalToRefund
-			);
-			
-		}
-		
-		refundPromptlyByMoneyAccount(credit, refundRequestByMoneyAccountDTO);
 	}
 	
 }
