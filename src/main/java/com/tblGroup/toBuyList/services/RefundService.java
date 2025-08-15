@@ -164,8 +164,6 @@ public class RefundService {
 		
 		System.out.println("⚠️ Remboursement en retard. Pénalité appliquée : " + penalty);
 		
-		// Blocage du client
-		credit.getClient().setBlocked(true);
 		
 		Wallet wallet = credit.getClient().getWallet();
 		double autoDeduct = totalToRefund * 0.80;
@@ -253,8 +251,6 @@ public class RefundService {
 		
 		System.out.println("⚠️ Remboursement en retard. Pénalité appliquée : " + penalty);
 		
-		// Blocage du client
-		credit.getClient().setBlocked(true);
 		
 		MoneyAccount account = moneyAccountRepository.findByPhone(refundRequestByMoneyAccountDTO.moneyAccountNumber());
 		

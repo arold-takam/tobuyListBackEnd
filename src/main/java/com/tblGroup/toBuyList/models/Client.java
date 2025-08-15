@@ -31,7 +31,6 @@ public class Client {
 	@JoinColumn(name = "wallet")
 	private Wallet wallet;
 	
-	private boolean blocked;
 	
 	public Client() {
 	}
@@ -41,7 +40,7 @@ public class Client {
 		this.mail = mail;
 		this.password = password;
 		this.moneyAccountList = moneyAccountList;
-        this.wallet = wallet;
+                this.wallet = wallet;
     }
 
 //	------------------------------------------------------------------------------------------------------------
@@ -89,12 +88,5 @@ public class Client {
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
     }
-	
-	public void setBlocked(boolean blocked) {
-		this.blocked = blocked;
-	}
-	
-	public boolean isBlocked() {
-		return blocked;
-	}
+    
 }
