@@ -95,7 +95,7 @@ public class RefundService {
 	}
 
 
-//  -----------------------------------------------------------------------------------------------------------------------------------------------
+//REFUND LOGIC-----------------------------------------------------------------------------------------------------------------------------------
 	
 	private void refundPromptlyByWallet(Credit credit, RefundRequestByWalletDTO dto) {
 		double amountToRefund = dto.amount();
