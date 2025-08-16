@@ -68,7 +68,8 @@ public class DepositService {
 		double amountToRefund;
 		
 		
-		Refund lastRefund= refundRepository.findAllByCredit_Client(client).getLast();
+		List<Refund> refunds = refundRepository.findAllByCredit_Client(client);
+		Refund lastRefund = refunds.isEmpty() ? null : refunds.get(refunds.size() - 1);
 		
 		if (lastRefund != null) {
 			if (!lastRefund.closesCredit()) {
@@ -87,7 +88,7 @@ public class DepositService {
 				if ((creditDelay - realDelay) <= 0){
 					System.out.println("You will take a penalty of 80% on your next deposits cause of your last credit witch exceed the delay.");
 					
-					amountToRefund  = depositDTO.amount() * 0.2;
+					amountToRefund  = depositDTO.amount() * 0.8;
 					
 					lastCredit.setAmountRefund(lastCredit.getAmountRefund() + amountToRefund);
 					creditRepository.save(lastCredit);
@@ -100,7 +101,7 @@ public class DepositService {
 					moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
 					deposit.setmAccountNumber(depositDTO.phoneMAccount());
 					
-					clientWallet.setAmount(clientWallet.getAmount() + depositDTO.amount());
+					clientWallet.setAmount(clientWallet.getAmount() + (depositDTO.amount() - amountToRefund));
 					deposit.setClient(client);
 					
 					deposit.setDateDeposit(LocalDate.now());
