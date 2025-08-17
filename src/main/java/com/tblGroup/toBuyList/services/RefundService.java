@@ -1,13 +1,10 @@
 package com.tblGroup.toBuyList.services;
 
-
 import com.tblGroup.toBuyList.dto.RefundRequestByMoneyAccountDTO;
 import com.tblGroup.toBuyList.dto.RefundRequestByWalletDTO;
 import com.tblGroup.toBuyList.models.*;
-import com.tblGroup.toBuyList.repositories.CreditRepository;
-import com.tblGroup.toBuyList.repositories.MoneyAccountRepository;
-import com.tblGroup.toBuyList.repositories.RefundRepository;
-import com.tblGroup.toBuyList.repositories.WalletRepository;
+import com.tblGroup.toBuyList.repositories.*;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,277 +18,125 @@ public class RefundService {
 	private final CreditRepository creditRepository;
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
-	private final ClientService clientService;
+	private final ClientRepository clientRepository;
 	
-	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientService clientService) {
+	// Removed ClientService dependency here as it's no longer used in the main logic
+	
+	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository) {
 		this.refundRepository = refundRepository;
 		this.creditRepository = creditRepository;
 		this.walletRepository = walletRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
-		this.clientService = clientService;
+		this.clientRepository = clientRepository;
 	}
-
-
-//  REFUND MANAGEMENT-----------------------------------------------------------------------------------------------------------------------------------------------
-
-	public void makeRefundByWallet(int creditID, RefundRequestByWalletDTO requestByWalletDTO) {
+	
+	// --- REFUND MANAGEMENT ---
+	@Transactional
+	public void makeRefundByWallet(int creditID, RefundRequestByWalletDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
 		
-		CreditOffer offer = credit.getCreditOffer();
-		LocalDate dateCredit = credit.getDateCredit();
-		LocalDate dateRefund = LocalDate.now();
+		Wallet wallet = credit.getClient().getWallet();
 		
-		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-		int creditDelay = offer.getCreditDelay();
-		
-		if (realDelay <= creditDelay) {
-			refundPromptlyByWallet(credit, requestByWalletDTO);
-		} else {
-			throw new IllegalArgumentException("This refund is not possible, you have a penaty for your credit. A tax will be applied.");
-		}
+		// La logique de remboursement unifiée est appelée ici
+		processRefund(credit, request.amount(), request.description(), wallet, null);
 	}
 	
-	public void makeRefundByMoneyAccount(int creditID, RefundRequestByMoneyAccountDTO refundRequestByMoneyAccountDTO) {
+	@Transactional
+	public void makeRefundByMoneyAccount(int creditID, RefundRequestByMoneyAccountDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
 		
-		CreditOffer offer = credit.getCreditOffer();
+		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
+		if (moneyAccount == null) {
+			throw new IllegalArgumentException("This money account does not exist");
+		}
+		
+		// La logique de remboursement unifiée est appelée ici
+		processRefund(credit, request.amount(), request.description(), null, moneyAccount);
+	}
+	
+	// --- PRIVATE HELPER METHODS ---
+	private void processRefund(Credit credit, double initialAmount, String description, Wallet wallet, MoneyAccount moneyAccount) {
+		// Calcul de la pénalité si le remboursement est en retard
+		double totalAmountToDebit = initialAmount;
 		LocalDate dateCredit = credit.getDateCredit();
 		LocalDate dateRefund = LocalDate.now();
-		
 		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-		int creditDelay = offer.getCreditDelay();
+		int creditDelay = credit.getCreditOffer().getCreditDelay();
 		
-		if (realDelay <= creditDelay) {
-			refundPromptlyByMoneyAccount(credit, refundRequestByMoneyAccountDTO);
+		// Vérifie si le crédit est en retard
+		if (realDelay > creditDelay) {
+			double penalty = initialAmount * credit.getCreditOffer().getTaxAfterDelay() * realDelay;
+			totalAmountToDebit += penalty;
+			description += " (avec pénalité)";
+		}
+		
+		// Vérification du solde et déduction du compte
+		if (wallet != null) {
+			if (wallet.getAmount() < totalAmountToDebit) {
+				throw new IllegalArgumentException("Insufficient wallet balance.");
+			}
+			wallet.setAmount(wallet.getAmount() - totalAmountToDebit);
+			walletRepository.save(wallet);
+		} else if (moneyAccount != null) {
+			if (moneyAccount.getAmount() < totalAmountToDebit) {
+				throw new IllegalArgumentException("Insufficient money account balance.");
+			}
+			moneyAccount.setAmount(moneyAccount.getAmount() - totalAmountToDebit);
+			moneyAccountRepository.save(moneyAccount);
 		} else {
-			throw new IllegalArgumentException("This refund is not possible, you have a penaty for your credit. A tax will be applied.");
+			throw new IllegalArgumentException("No valid account provided for refund.");
+		}
+		
+		// Mise à jour du crédit
+		double creditLimit = credit.getCreditOffer().getLimitationCreditAmount();
+		double totalAfterRefund = credit.getAmountRefund() + totalAmountToDebit;
+		
+		if (totalAfterRefund > creditLimit) {
+			throw new IllegalArgumentException("Refund exceeds the credit limit.");
+		}
+		
+		credit.setAmountRefund(totalAfterRefund);
+		credit.setActive(totalAfterRefund < creditLimit);
+		creditRepository.save(credit);
+		
+		// Création et sauvegarde du remboursement
+		Refund refund = new Refund();
+		refund.setDescription(description);
+		refund.setCredit(credit);
+		refund.setMoneyAccountNumber(moneyAccount != null ? moneyAccount.getPhone() : null);
+		refund.setDateRefund(dateRefund);
+		refund.setTimeRefund(LocalTime.now());
+		refund.setAmount(totalAmountToDebit);
+		refund.setEnded(totalAfterRefund >= creditLimit);
+		
+		refundRepository.save(refund);
+		
+		System.out.println("📊 Montant restant à rembourser : " + (creditLimit - totalAfterRefund) + " FCFA");
+		if (refund.isEnded()) {
+			System.out.println("✅ Crédit entièrement remboursé.");
+		} else {
+			System.out.println("Refund successfully processed.");
 		}
 	}
-
-
-//	GETTING MANAGEMENT----------------------------------------------------------------------------------------------------------------------------------------------------------
 	
+	// --- GETTING MANAGEMENT (unchanged) ---
 	public Refund getRefundByID(int refundID) {
-		
-		return refundRepository.findById(refundID).orElseThrow(()-> new IllegalArgumentException("This refund does not exist"));
+		return refundRepository.findById(refundID).orElseThrow(() -> new IllegalArgumentException("This refund does not exist"));
 	}
 	
 	public List<Refund> getAllRefundsByClientID(int clientID) {
-		Client client = clientService.getClientById(clientID);
+		Client client = clientRepository.findById(clientID).orElseThrow(() -> new IllegalArgumentException("This client does not exist"));
 		
 		return refundRepository.findAllByCredit_Client(client);
 	}
 	
-	public List<Refund>getAllRefundsByDate(LocalDate dateRefund) {
-		
+	public List<Refund> getAllRefundsByDate(LocalDate dateRefund) {
 		return refundRepository.findAllByDateRefund(dateRefund);
 	}
 	
 	public List<Refund> getAllRefunds() {
-		
 		return refundRepository.findAll();
 	}
-
-
-//REFUND LOGIC-----------------------------------------------------------------------------------------------------------------------------------
-	
-	private void refundPromptlyByWallet(Credit credit, RefundRequestByWalletDTO dto) {
-		double amountToRefund = dto.amount();
-		double totalAfterRefund = credit.getAmountRefund() + amountToRefund;
-		double creditLimit = credit.getCreditOffer().getLimitationCreditAmount();
-		
-		if (totalAfterRefund > creditLimit) {
-			throw new IllegalArgumentException("Refund exceeds the credit limit.");
-		}
-
-		Wallet wallet = credit.getClient().getWallet();
-		
-		// Déduction du compte
-		if (wallet != null) {
-			if (wallet.getAmount() < amountToRefund) {
-				throw new IllegalArgumentException("Insufficient wallet balance.");
-			}
-			
-			LocalDate dateCredit = credit.getDateCredit();
-			LocalDate dateRefund = LocalDate.now();
-			int creditDelay = credit.getCreditOffer().getCreditDelay();
-			
-			long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-			
-			if ((creditDelay - realDelay) <= 0){
-				double penalty = amountToRefund  *  credit.getCreditOffer().getTaxAfterDelay() * realDelay;
-				
-				wallet.setAmount(wallet.getAmount() - penalty);
-				walletRepository.save(wallet);
-				
-				credit.setAmountRefund(credit.getAmountRefund() + penalty);
-				creditRepository.save(credit);
-				
-				// Création du remboursement
-				Refund refund = new Refund();
-				
-				refund.setDescription(dto.description());
-				refund.setCredit(credit);
-				refund.setMoneyAccountNumber(" ");
-				refund.setDateRefund(LocalDate.now());
-				refund.setTimeRefund(LocalTime.now());
-				refund.setAmount(penalty);
-				refund.setEnded(totalAfterRefund + penalty == creditLimit);
-				
-				refundRepository.save(refund);
-				
-				// Affichage du statut
-				double remainingAmount = creditLimit - totalAfterRefund + penalty;
-				long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
-				
-				System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
-				System.out.println("⏳ Délai restant : " + remainingDays + " jours");
-				
-				return;
-			}
-			
-			wallet.setAmount(wallet.getAmount() - amountToRefund);
-			walletRepository.save(wallet);
-		} else {
-			throw new IllegalArgumentException("Wallet not found for this client.");
-		}
-		
-		// Mise à jour du crédit
-		credit.setAmountRefund(totalAfterRefund);
-		creditRepository.save(credit);
-		
-		// Création du remboursement
-		Refund refund = new Refund();
-		
-		refund.setDescription(dto.description());
-		refund.setCredit(credit);
-		refund.setMoneyAccountNumber(" ");
-		refund.setDateRefund(LocalDate.now());
-		refund.setTimeRefund(LocalTime.now());
-		refund.setAmount(amountToRefund);
-		refund.setEnded(totalAfterRefund == creditLimit);
-		
-		refundRepository.save(refund);
-		
-		// Affichage du statut
-		double remainingAmount = creditLimit - totalAfterRefund;
-		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
-		
-		System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
-		System.out.println("⏳ Délai restant : " + remainingDays + " jours");
-		
-		if (refund.closesCredit()) {
-			credit.setActive(false);
-			creditRepository.save(credit);
-			
-			
-			System.out.println("✅ Crédit entièrement remboursé.");
-			// Tu peux ici déclencher une notification ou archiver le crédit
-		} else {
-			System.out.println("Refund successfully processed.");
-		}
-	}
-	
-	
-	private void refundPromptlyByMoneyAccount(Credit credit, RefundRequestByMoneyAccountDTO refundRequestByMoneyAccountDTO) {
-		double amountToRefund = refundRequestByMoneyAccountDTO.amount();
-		double totalAfterRefund = credit.getAmountRefund() + amountToRefund;
-		double creditLimit = credit.getCreditOffer().getLimitationCreditAmount();
-		
-		if (totalAfterRefund > creditLimit) {
-			throw new IllegalArgumentException("Refund exceeds the credit limit.");
-		}
-		
-		MoneyAccount account = moneyAccountRepository.findByPhone(refundRequestByMoneyAccountDTO.moneyAccountNumber());
-		
-		if (account == null) {
-			throw new  IllegalArgumentException("This money account does not exist");
-		}
-		
-		// Déduction du compte
-		if (account.getAmount() < amountToRefund) {
-			throw new IllegalArgumentException("Insufficient account balance.");
-		}
-		
-		
-		
-		LocalDate dateCredit = credit.getDateCredit();
-		LocalDate dateRefund = LocalDate.now();
-		int creditDelay = credit.getCreditOffer().getCreditDelay();
-		
-		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-		
-		if ((creditDelay - realDelay) <= 0){
-			double penalty = amountToRefund  *  credit.getCreditOffer().getTaxAfterDelay() * realDelay;
-			
-			account.setAmount(account.getAmount() - penalty);
-			moneyAccountRepository.save(account);
-			
-			credit.setAmountRefund(credit.getAmountRefund() + penalty);
-			creditRepository.save(credit);
-			
-			// Création du remboursement
-			Refund refund = new Refund();
-			
-			refund.setDescription(refundRequestByMoneyAccountDTO.description());
-			refund.setCredit(credit);
-			refund.setMoneyAccountNumber(" ");
-			refund.setDateRefund(LocalDate.now());
-			refund.setTimeRefund(LocalTime.now());
-			refund.setAmount(penalty);
-			refund.setEnded(totalAfterRefund + penalty == creditLimit);
-			
-			refundRepository.save(refund);
-			
-			// Affichage du statut
-			double remainingAmount = creditLimit - totalAfterRefund + penalty;
-			long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
-			
-			System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
-			System.out.println("⏳ Délai restant : " + remainingDays + " jours");
-			
-			return;
-		}
-		
-		
-		
-		account.setAmount(account.getAmount() - amountToRefund);
-		moneyAccountRepository.save(account);
-		
-		// Mise à jour du crédit
-		credit.setAmountRefund(totalAfterRefund);
-		creditRepository.save(credit);
-		
-		// Création du remboursement
-		Refund refund = new Refund();
-		refund.setDescription(refundRequestByMoneyAccountDTO.description());
-		refund.setCredit(credit);
-		refund.setMoneyAccountNumber(account.getPhone());
-		refund.setDateRefund(LocalDate.now());
-		refund.setTimeRefund(LocalTime.now());
-		refund.setAmount(amountToRefund);
-		refund.setEnded(totalAfterRefund == creditLimit);
-		
-		refundRepository.save(refund);
-		
-		// Affichage du statut
-		double remainingAmount = creditLimit - totalAfterRefund;
-		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), credit.getDateCredit().plusDays(credit.getCreditOffer().getCreditDelay()));
-		
-		System.out.println("📊 Montant restant à rembourser : " + remainingAmount + " FCFA");
-		System.out.println("⏳ Délai restant : " + remainingDays + " jours");
-		
-		if (refund.closesCredit()) {
-			credit.setActive(false);
-			creditRepository.save(credit);
-			
-			System.out.println("✅ Crédit entièrement remboursé.");
-			// Tu peux ici déclencher une notification ou archiver le crédit
-		} else {
-			System.out.println("Refund successfully processed.");
-		}
-	}
-	
 }
