@@ -62,12 +62,15 @@ public class RefundService {
 		double totalAmountToDebit = initialAmount;
 		LocalDate dateCredit = credit.getDateCredit();
 		LocalDate dateRefund = LocalDate.now();
+		
 		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
 		int creditDelay = credit.getCreditOffer().getCreditDelay();
 		
 		// Vérifie si le crédit est en retard
 		if (realDelay > creditDelay) {
-			double penalty = initialAmount * credit.getCreditOffer().getTaxAfterDelay() * realDelay;
+			long daysLate = realDelay - creditDelay;
+			
+			double penalty = initialAmount * credit.getCreditOffer().getTaxAfterDelay() * daysLate;
 			totalAmountToDebit += penalty;
 			description += " (avec pénalité)";
 		}

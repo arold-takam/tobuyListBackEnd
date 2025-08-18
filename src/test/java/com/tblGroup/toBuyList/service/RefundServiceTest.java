@@ -87,39 +87,52 @@ public class RefundServiceTest {
 	}
 	
 	@Test
-	void makeRefundByWallet_worstCase(){
+	void makeRefundByWallet_withLateCredit_shouldApplyCorrectPenalty() {
+		// --- ARRANGE ---
 		Client client = new Client();
 		client.setId(1);
 		
 		Wallet wallet = new Wallet();
-		wallet.setAmount(1500);
+		wallet.setAmount(2000);
 		client.setWallet(wallet);
 		
 		Credit credit = new Credit();
 		credit.setId(2);
 		credit.setClient(client);
 		credit.setAmountRefund(0);
-		credit.setDateCredit(LocalDate.parse("2025-08-15"));
+		
+		// Le crédit est en retard de 19 jours (20 jours écoulés - 1 jour de délai)
+		LocalDate dateCredit = LocalDate.now().minusDays(20);
+		credit.setDateCredit(dateCredit);
 		
 		CreditOffer creditOffer = new CreditOffer();
-		creditOffer.setCreditDelay(1);
-		creditOffer.setTaxAfterDelay(0.75f);
+		creditOffer.setCreditDelay(1); // Délai d'un jour
+		creditOffer.setTaxAfterDelay(0.1f); // Taux de pénalité de 10%
 		creditOffer.setLimitationCreditAmount(2000);
-		
 		credit.setCreditOffer(creditOffer);
 		
-		RefundRequestByWalletDTO request = new RefundRequestByWalletDTO("first late refund", 500);
+		RefundRequestByWalletDTO request = new RefundRequestByWalletDTO("Remboursement en retard", 500);
 		
+		// --- ACT ---
 		when(creditRepository.findById(2)).thenReturn(Optional.of(credit));
 		
 		refundService.makeRefundByWallet(2, request);
 		
-		assertEquals(250, wallet.getAmount());
-		assertEquals(1250, credit.getAmountRefund());
+		// --- ASSERT ---
+		// Calcul manuel de la pénalité et du total pour validation
+		long daysLate = 19;
+		double expectedPenalty = 500 * 0.1 * daysLate; // 500 * 0.1 * 19 = 950 FCFA
+		double expectedTotalToDebit = 500 + expectedPenalty; // 500 + 950 = 1450 FCFA
 		
+		double delta = 0.0001;
+		
+		// Vérifier les soldes finaux
+		assertEquals(2000 - expectedTotalToDebit, wallet.getAmount(), delta); // 2000 - 1450 = 550 FCFA
+		assertEquals(expectedTotalToDebit, credit.getAmountRefund(), delta); // 1450 FCFA
+		
+		// Vérifier que les méthodes de sauvegarde ont été appelées
 		verify(walletRepository, times(1)).save(wallet);
 		verify(creditRepository, times(1)).save(credit);
-		
 		verify(refundRepository, times(1)).save(any(Refund.class));
 	}
 	
@@ -201,12 +214,20 @@ public class RefundServiceTest {
 		// --- 2. Exécution de la méthode à tester (ACT) ---
 		refundService.makeRefundByMoneyAccount(2, request);
 		
+		long daysLate = 1;
+		double amountToDebit = 500;
+		double creditTax = 0.75;
+		
+		double penalty = amountToDebit * creditTax * daysLate;
+		double expectedTotalToDebit = amountToDebit + penalty;
+		
+		
 		// --- 3. Vérification des résultats (ASSERT) ---
 		// Le solde du compte monétaire doit être de 250 (1500 - 1250)
-		assertEquals(250, moneyAccount.getAmount());
+		assertEquals(625, moneyAccount.getAmount());
 		
 		// Le montant du crédit doit être de 1250 (500 + 750 de pénalité)
-		assertEquals(1250, credit.getAmountRefund());
+		assertEquals(875, credit.getAmountRefund());
 		
 		// Les appels aux méthodes de sauvegarde ont été vérifiés
 		verify(moneyAccountRepository, times(1)).save(moneyAccount);

@@ -62,7 +62,7 @@ public class DepositService {
 		List<Credit> activeCredits = creditRepository.findAllByClient(client);
 		
 		// On ne gère que le dernier crédit en retard selon votre logique métier
-		Credit lastCredit = activeCredits.isEmpty() ? null : activeCredits.getLast();
+		Credit lastCredit = activeCredits.isEmpty() ? null : activeCredits.get(activeCredits.size() - 1);
 		
 		if (lastCredit != null && lastCredit.isActive()) {
 			double remainingAmountToRefund = lastCredit.getCreditOffer().getLimitationCreditAmount() - lastCredit.getAmountRefund();
@@ -78,9 +78,18 @@ public class DepositService {
 					
 					// Calculer la pénalité proportionnelle
 					double taxRate = lastCredit.getCreditOffer().getTaxAfterDelay();
+					
+					// Correction de la pénalité pour qu'elle corresponde à la logique métier
 					double penalty = amountToTakeFromDeposit * taxRate;
 					
 					double totalAmountForRefund = amountToTakeFromDeposit + penalty;
+					
+					// Ajout de la sécurité métier pour éviter que le prélèvement dépasse le dépôt
+					if (totalAmountForRefund > depositDTO.amount()) {
+						totalAmountForRefund = depositDTO.amount();
+						amountToTakeFromDeposit = depositDTO.amount() / (1 + taxRate);
+						penalty = depositDTO.amount() - amountToTakeFromDeposit;
+					}
 					
 					// Déduire du montant à créditer au portefeuille
 					amountForWallet = depositDTO.amount() - totalAmountForRefund;
