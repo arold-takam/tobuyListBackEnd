@@ -1,28 +1,27 @@
 package com.tblGroup.toBuyList.service;
 
-
 import com.tblGroup.toBuyList.dto.DepositDTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.repositories.*;
 import com.tblGroup.toBuyList.services.DepositService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class DepositServiceTest {
-
+	
 	@InjectMocks
 	private DepositService depositService;
 	
@@ -47,10 +46,11 @@ public class DepositServiceTest {
 	@Mock
 	private HistoryRepository historyRepository;
 	
-	
 	@Test
 	void testMakeDeposit_bestCase() throws Exception {
+		// Arrange
 		Client client = new Client();
+		client.setId(1);
 		Wallet wallet = new Wallet();
 		wallet.setAmount(5000);
 		client.setWallet(wallet);
@@ -61,70 +61,158 @@ public class DepositServiceTest {
 		
 		DepositDTO depositDTO = new DepositDTO(10000, "Deposit of 10000", "699123456");
 		
-		when(clientRepository.findById(2)).thenReturn(Optional.of(client));
+		// Mocking
+		when(clientRepository.findById(1)).thenReturn(Optional.of(client));
 		when(moneyAccountRepository.findByPhone("699123456")).thenReturn(moneyAccount);
-		when(refundRepository.findAllByCredit_Client(client)).thenReturn(List.of());
+		when(creditRepository.findAllByClient(client)).thenReturn(List.of());
 		
-		depositService.makeDeposit(2, depositDTO);
+		// Act
+		depositService.makeDeposit(1, depositDTO);
 		
+		// Assert
 		assertEquals(15000, wallet.getAmount());
 		assertEquals(10000, moneyAccount.getAmount());
 		verify(depositRepository).save(any(Deposit.class));
 	}
 	
+	
 	@Test
-	void testMakeDeposit_worstCase() throws Exception {
-		// 1. Données de test
-		Client client = new Client();
+	void testMakeDeposit_withLateCreditAndPenaltyApplied() {
+		// Arrange
+		int clientID = 1;
+		double depositAmount = 10000;
+		double creditLimit = 15000;
+		double alreadyRefunded = 5000;
+		float taxRate = 0.02f;
+		int creditDelay = 30;
+		
+		DepositDTO depositDTO = new DepositDTO(depositAmount, "Dépôt avec pénalité", "699123456");
+		
 		Wallet wallet = new Wallet();
-		wallet.setAmount(5000);
+		wallet.setAmount(2000);
+		Client client = new Client();
+		client.setId(clientID);
 		client.setWallet(wallet);
 		
 		MoneyAccount moneyAccount = new MoneyAccount();
-		moneyAccount.setAmount(20000);
+		moneyAccount.setAmount(15000);
 		moneyAccount.setPhone("699123456");
 		
-		DepositDTO depositDTO = new DepositDTO(10000, "Deposit with penalty", "699123456");
-		
-		// Création d'un scénario de crédit en retard
-		Credit overdueCredit = new Credit();
-		overdueCredit.setDateCredit(LocalDate.now().minusDays(40));
-		overdueCredit.setAmountRefund(0);
-		
 		CreditOffer offer = new CreditOffer();
-		offer.setCreditDelay(30);
-		overdueCredit.setCreditOffer(offer);
+		offer.setCreditDelay(creditDelay);
+		offer.setLimitationCreditAmount(creditLimit);
+		offer.setTaxAfterDelay(taxRate);
 		
-		Refund lastRefund = new Refund();
-		lastRefund.setDateRefund(LocalDate.now().minusDays(10));
-		lastRefund.setEnded(false);
+		Credit credit = new Credit();
+		credit.setClient(client);
+		credit.setCreditOffer(offer);
+		credit.setDateCredit(LocalDate.now().minusDays(45));
+		credit.setAmountRefund(alreadyRefunded);
+		credit.setActive(true);
 		
-		// 2. Mocking : simuler le comportement du repository
-		when(clientRepository.findById(2)).thenReturn(Optional.of(client));
+		// Mocking
+		when(clientRepository.findById(clientID)).thenReturn(Optional.of(client));
 		when(moneyAccountRepository.findByPhone("699123456")).thenReturn(moneyAccount);
+		when(creditRepository.findAllByClient(client)).thenReturn(List.of(credit));
 		
-		// Simuler le crédit et le remboursement pour déclencher le prélèvement
-		when(creditRepository.findAllByClient(client)).thenReturn(List.of(overdueCredit));
-		when(refundRepository.findAllByCredit_Client(client)).thenReturn(List.of(lastRefund));
+		// Calculs corrigés
+		double amountToTakeFromDeposit = depositAmount / (1 + taxRate); // ≈ 9803.92
+		double penalty = depositAmount - amountToTakeFromDeposit;       // ≈ 196.08
+		double totalToDebit = depositAmount;                            // 10000
+		double expectedWalletAmount = wallet.getAmount();               // 2000 (rien ajouté)
+		double expectedMoneyAccountAmount = moneyAccount.getAmount() - depositAmount; // 5000
+		double expectedCreditRefund = alreadyRefunded + totalToDebit;  // 15000
 		
-		// 3. Exécution du test
-		depositService.makeDeposit(2, depositDTO);
+		// Act
+		depositService.makeDeposit(clientID, depositDTO);
 		
-		// 4. Assertions (Vérifications)
-		// Le wallet reçoit 20% du dépôt : 5000 + (10000 * 0.20) = 7000
-		assertEquals(7000, wallet.getAmount());
+		// Assert
+		double delta = 0.01;
+		assertEquals(expectedWalletAmount, wallet.getAmount(), delta);
+		assertEquals(expectedMoneyAccountAmount, moneyAccount.getAmount(), delta);
+		assertEquals(expectedCreditRefund, credit.getAmountRefund(), delta);
 		
-		// Le moneyAccount est débité du montant total du dépôt
-		assertEquals(10000, moneyAccount.getAmount());
+		// Vérification du Refund
+		ArgumentCaptor<Refund> refundCaptor = ArgumentCaptor.forClass(Refund.class);
+		verify(refundRepository).save(refundCaptor.capture());
+		Refund refund = refundCaptor.getValue();
 		
-		// Vérifier que le crédit a été mis à jour
-		assertEquals(8000, overdueCredit.getAmountRefund());
-		verify(creditRepository).save(overdueCredit);
+		assertEquals(depositAmount, refund.getAmount(), delta);
+		assertTrue(refund.isEnded());
+		assertEquals("Prélèvement automatique pour crédit en retard", refund.getDescription());
 		
-		// Vérifier que le dépôt a été enregistré avec le montant net
 		verify(depositRepository).save(any(Deposit.class));
-		
-		// Vérifier que l'historique a bien été sauvegardé
 		verify(historyRepository).save(any(History.class));
 	}
+	
+	@Test
+	void testMakeDeposit_withInsufficientDepositTriggersPenaltyRecalculation() {
+		// Arrange
+		int clientID = 1;
+		double depositAmount = 5000;
+		double creditLimit = 15000;
+		double alreadyRefunded = 5000;
+		float taxRate = 0.02f;
+		int creditDelay = 30;
+		
+		DepositDTO depositDTO = new DepositDTO(depositAmount, "Dépôt partiel avec pénalité", "699123456");
+		
+		Wallet wallet = new Wallet();
+		wallet.setAmount(1000);
+		Client client = new Client();
+		client.setId(clientID);
+		client.setWallet(wallet);
+		
+		MoneyAccount moneyAccount = new MoneyAccount();
+		moneyAccount.setAmount(8000);
+		moneyAccount.setPhone("699123456");
+		
+		CreditOffer offer = new CreditOffer();
+		offer.setCreditDelay(creditDelay);
+		offer.setLimitationCreditAmount(creditLimit);
+		offer.setTaxAfterDelay(taxRate);
+		
+		Credit credit = new Credit();
+		credit.setClient(client);
+		credit.setCreditOffer(offer);
+		credit.setDateCredit(LocalDate.now().minusDays(45));
+		credit.setAmountRefund(alreadyRefunded);
+		credit.setActive(true);
+		
+		// Mocking
+		when(clientRepository.findById(clientID)).thenReturn(Optional.of(client));
+		when(moneyAccountRepository.findByPhone("699123456")).thenReturn(moneyAccount);
+		when(creditRepository.findAllByClient(client)).thenReturn(List.of(credit));
+		
+		// Calculs attendus
+		double amountToTakeFromDeposit = depositAmount / (1 + taxRate); // ≈ 4901.96
+		double penalty = depositAmount - amountToTakeFromDeposit;       // ≈ 98.04
+		double totalAmountForRefund = depositAmount;                    // 5000
+		double expectedWalletAmount = wallet.getAmount();               // 1000 (rien ajouté)
+		double expectedMoneyAccountAmount = moneyAccount.getAmount() - depositAmount; // 3000
+		double expectedCreditRefund = alreadyRefunded + totalAmountForRefund; // 10000
+		
+		// Act
+		depositService.makeDeposit(clientID, depositDTO);
+		
+		// Assert
+		double delta = 0.01;
+		assertEquals(expectedWalletAmount, wallet.getAmount(), delta);
+		assertEquals(expectedMoneyAccountAmount, moneyAccount.getAmount(), delta);
+		assertEquals(expectedCreditRefund, credit.getAmountRefund(), delta);
+		
+		// Vérification du Refund
+		ArgumentCaptor<Refund> refundCaptor = ArgumentCaptor.forClass(Refund.class);
+		verify(refundRepository).save(refundCaptor.capture());
+		Refund refund = refundCaptor.getValue();
+		
+		assertEquals(depositAmount, refund.getAmount(), delta);
+		assertFalse(refund.isEnded()); // le crédit n'est pas encore totalement remboursé
+		assertEquals("Prélèvement automatique pour crédit en retard", refund.getDescription());
+		
+		verify(depositRepository).save(any(Deposit.class));
+		verify(historyRepository).save(any(History.class));
+	}
+	
+	
 }

@@ -9,126 +9,100 @@ import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
 import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping("/wallet")
+@RequestMapping(path = "/wallet", produces = APPLICATION_JSON_VALUE)
 public class WalletController {
+    
     private final TransferService transferService;
     private final DepositService depositService;
     private final HistoryService historyService;
-
+    
     public WalletController(TransferService transferService, DepositService depositService, HistoryService historyService) {
         this.transferService = transferService;
         this.depositService = depositService;
         this.historyService = historyService;
     }
-
-
-
-//    TRANSFER MANAGEMENT--------------------------------------------------------------------------------------------------------------------------
-
-    @PostMapping("/transferToAccount/{clientId}")
-    public ResponseEntity<?> MakeATransferToAnAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer typeTransfer) {
-        try{
-            transferService.makeATransferToAnAccount(clientId, transfer, typeTransfer);
-
+    
+    // --- TRANSFER MANAGEMENT ------------------------------------------------------------
+    
+    @PostMapping(path = "/transfer/account/{clientId}", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> transferToAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer type) {
+        return handle(() -> {
+            transferService.makeATransferToAnAccount(clientId, transfer, type);
             return ResponseEntity.ok().build();
-        }catch(IllegalArgumentException e){
-            return ResponseEntity.notFound().build();
-        }catch(Exception e){
-            return ResponseEntity.badRequest().build();
-        }
-
-
+        });
     }
-
-    @PostMapping("/transferToWallet/{clientId}")
-    public ResponseEntity<?> MakeATransferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer typeTransfer){
-        try{
-            transferService.makeATransferToAWallet(clientId, transfer,typeTransfer);
+    
+    @PostMapping(path = "/transfer/wallet/{clientId}", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> transferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer type) {
+        return handle(() -> {
+            transferService.makeATransferToAWallet(clientId, transfer, type);
             return ResponseEntity.ok().build();
-        }catch(IllegalArgumentException e){
-            return ResponseEntity.notFound().build();
-        }catch(Exception e){
-            return ResponseEntity.badRequest().build();
-        }
-
-
+        });
     }
-
-
-    //	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
-    @PostMapping(path = "/deposit/make/{clientID}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<?>create(@PathVariable int clientID,  @RequestBody DepositDTO depositDTO){
-        try {
-            depositService.makeDeposit(clientID, depositDTO);
-
-            return new ResponseEntity<>( HttpStatus.OK);
-        }catch (IllegalArgumentException e){
-            System.out.printf("%s", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            System.out.printf("%s", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    
+    // --- DEPOSIT MANAGEMENT -------------------------------------------------------------
+    
+    @PostMapping(path = "/deposit/{clientId}", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createDeposit(@PathVariable int clientId, @RequestBody DepositDTO depositDTO) {
+        return handle(() -> {
+            depositService.makeDeposit(clientId, depositDTO);
+            return ResponseEntity.ok().build();
+        });
     }
-
-    @GetMapping(path = "/deposit/get/{clientID}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Deposit>get(@PathVariable int clientID, @RequestParam int depositID){
-        try {
-            Deposit deposit = depositService.getDeposit(clientID, depositID);
-
-            return new ResponseEntity<>(deposit, HttpStatus.OK);
-        }catch (IllegalArgumentException e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    
+    @GetMapping(path = "/deposit/{clientId}")
+    public ResponseEntity<Deposit> getDeposit(@PathVariable int clientId, @RequestParam int depositID) {
+        return handle(() -> new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK));
     }
-
-    @GetMapping(path = "/deposit/get/all/{clientID}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Deposit>>get(@PathVariable int clientID){
-        try {
-            List<Deposit> depositList = depositService.getAllDeposit(clientID);
-
-            return new ResponseEntity<>(depositList, HttpStatus.OK);
-        }catch (IllegalArgumentException e){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    
+    @GetMapping(path = "/deposit/all/{clientId}")
+    public ResponseEntity<List<Deposit>> getAllDeposits(@PathVariable int clientId) {
+        return handle(() -> {
+            List<Deposit> deposits = depositService.getAllDeposit(clientId);
+            return deposits.isEmpty() ? new ResponseEntity<>(NO_CONTENT) : ResponseEntity.ok(deposits);
+        });
     }
-
-    //	--------------------------------------------------------------------HISTORY-----------------------------------------------------------------
-
-    @GetMapping("/history/{clientID}")
-    public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientID){
-        try{
-            List<HistoryResponse> history = historyService.getHistory(clientID);
-            return ResponseEntity.ok(history);
-
-        }catch(IllegalArgumentException e){
-            System.out.println(e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+    
+    // --- HISTORY MANAGEMENT -------------------------------------------------------------
+    
+    @GetMapping(path = "/history/{clientId}")
+    public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientId) {
+        return handle(() -> ResponseEntity.ok(historyService.getHistory(clientId)));
     }
-
-    @DeleteMapping("/history/delete/{clientID}")
-    public ResponseEntity<Void> deleteHistory(@PathVariable int clientID){
-        try{
-            historyService.deleteHistory(clientID);
+    
+    @DeleteMapping(path = "/history/{clientId}")
+    public ResponseEntity<Void> deleteHistory(@PathVariable int clientId) {
+        return handle(() -> {
+            historyService.deleteHistory(clientId);
             return ResponseEntity.noContent().build();
-
-        }catch(IllegalArgumentException e){
-            System.out.println(e.getMessage());
-            return ResponseEntity.notFound().build();
+        });
+    }
+    
+    // --- ERROR HANDLING UTILITY ---------------------------------------------------------
+    
+    private <T> ResponseEntity<T> handle(SupplierWithException<ResponseEntity<T>> supplier) {
+        try {
+            return supplier.get();
+        } catch (IllegalArgumentException e) {
+            System.out.println("Not found: " + e.getMessage());
+            return new ResponseEntity<>(NOT_FOUND);
+        } catch (Exception e) {
+            System.out.println("Bad request: " + e.getMessage());
+            return new ResponseEntity<>(BAD_REQUEST);
         }
+    }
+    
+    @FunctionalInterface
+    private interface SupplierWithException<T> {
+        T get() throws Exception;
     }
 }

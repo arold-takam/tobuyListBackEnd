@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -29,158 +28,144 @@ public class DepositService {
 		this.walletRepository = walletRepository;
 		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
-        this.historyRepository = historyRepository;
+		this.historyRepository = historyRepository;
 		this.creditRepository = creditRepository;
 		this.refundRepository = refundRepository;
 	}
 	
-//	--------------------------------------------------------------------DEPOSIT MANAGEMENT-----------------------------------------------------------------
 	@Transactional
-	public void makeDeposit(int clientID, DepositDTO depositDTO) throws Exception {
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
-		}
-		
-		Client client = optionalClient.get();
-		
-		Wallet clientWallet = client.getWallet();
+	public void makeDeposit(int clientID, DepositDTO depositDTO) {
+		Client client = clientRepository.findById(clientID)
+			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 		
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositDTO.phoneMAccount());
-		
 		if (moneyAccount == null) {
-			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
+			setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
 			throw new IllegalArgumentException("Money Account with phone number: " + depositDTO.phoneMAccount() + " not found.");
 		}
 		
-		if (depositDTO.amount() <= 0.0){
-			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
-			throw new Exception("This amount is invalid, please try again.");
+		if (depositDTO.amount() <= 0.0) {
+			setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
+			throw new IllegalArgumentException("This amount is invalid, please try again.");
 		}
 		
-		if (moneyAccount.getAmount() < depositDTO.amount()){
-			setHistory("Deposit of "+depositDTO.amount(), "FAILED", client);
-			throw new Exception("Your account "+moneyAccount.getName()+" has no sufficient amount for this deposit, please reload it. it balance is: "+moneyAccount.getAmount());
+		if (moneyAccount.getAmount() < depositDTO.amount()) {
+			setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
+			throw new IllegalArgumentException("Your account " + moneyAccount.getName() + " has no sufficient amount for this deposit, please reload it. it balance is: " + moneyAccount.getAmount());
 		}
 		
+		// --- Logique unifiée pour le dépôt et la pénalité ---
 		
-		double amountToRefund;
+		double amountForWallet = depositDTO.amount(); // Montant initial à créditer au portefeuille
 		
+		// Vérifier s'il y a un crédit en retard pour le client
+		List<Credit> activeCredits = creditRepository.findAllByClient(client);
 		
-		List<Refund> refunds = refundRepository.findAllByCredit_Client(client);
-		Refund lastRefund = refunds.isEmpty() ? null : refunds.get(refunds.size() - 1);
+		// On ne gère que le dernier crédit en retard selon votre logique métier
+		Credit lastCredit = activeCredits.isEmpty() ? null : activeCredits.get(activeCredits.size() - 1);
 		
-		if (lastRefund != null) {
-			if (!lastRefund.closesCredit()) {
-				Credit lastCredit = creditRepository.findAllByClient(client).getLast();
+		if (lastCredit != null && lastCredit.isActive()) {
+			double remainingAmountToRefund = lastCredit.getCreditOffer().getLimitationCreditAmount() - lastCredit.getAmountRefund();
+			
+			// Si le crédit n'est pas entièrement remboursé
+			if (remainingAmountToRefund > 0) {
+				// Vérifier si le crédit est en retard
+				boolean isLate = LocalDate.now().isAfter(lastCredit.getDateCredit().plusDays(lastCredit.getCreditOffer().getCreditDelay()));
 				
-				if (lastCredit == null) {
-					throw new IllegalArgumentException("This credit is not found.");
-				}
-				
-				LocalDate dateCredit = lastCredit.getDateCredit();
-				LocalDate dateRefund = lastRefund.getDateRefund();
-				int creditDelay = lastCredit.getCreditOffer().getCreditDelay();
-				
-				long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-				
-				if ((creditDelay - realDelay) <= 0){
-					System.out.println("You will take a penalty of 80% on your next deposits cause of your last credit witch exceed the delay.");
+				if(isLate) {
+					// Calculer le montant à prélever sur le dépôt, dans la limite du montant restant dû
+					double amountToTakeFromDeposit = Math.min(depositDTO.amount(), remainingAmountToRefund);
 					
-					amountToRefund  = depositDTO.amount() * 0.8;
+					// Calculer la pénalité proportionnelle
+					double taxRate = lastCredit.getCreditOffer().getTaxAfterDelay();
 					
-					lastCredit.setAmountRefund(lastCredit.getAmountRefund() + amountToRefund);
+					// Correction de la pénalité pour qu'elle corresponde à la logique métier
+					double penalty = amountToTakeFromDeposit * taxRate;
+					
+					double totalAmountForRefund = amountToTakeFromDeposit + penalty;
+					
+					// Ajout de la sécurité métier pour éviter que le prélèvement dépasse le dépôt
+					if (totalAmountForRefund > depositDTO.amount()) {
+						totalAmountForRefund = depositDTO.amount();
+						amountToTakeFromDeposit = depositDTO.amount() / (1 + taxRate);
+						penalty = depositDTO.amount() - amountToTakeFromDeposit;
+					}
+					
+					// Déduire du montant à créditer au portefeuille
+					amountForWallet = depositDTO.amount() - totalAmountForRefund;
+					
+					// Mettre à jour le crédit
+					lastCredit.setAmountRefund(lastCredit.getAmountRefund() + totalAmountForRefund);
 					creditRepository.save(lastCredit);
 					
-					Deposit deposit = new Deposit();
+					// Créer un enregistrement de remboursement automatique
+					Refund autoRefund = new Refund();
+					autoRefund.setDescription("Prélèvement automatique pour crédit en retard");
+					autoRefund.setCredit(lastCredit);
+					autoRefund.setAmount(totalAmountForRefund);
+					autoRefund.setDateRefund(LocalDate.now());
+					autoRefund.setTimeRefund(LocalTime.now());
+					autoRefund.setEnded(lastCredit.getAmountRefund() >= lastCredit.getCreditOffer().getLimitationCreditAmount());
 					
-					deposit.setAmount(depositDTO.amount() - amountToRefund);
-					deposit.setDescription(depositDTO.description());
+					refundRepository.save(autoRefund);
 					
-					moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
-					deposit.setmAccountNumber(depositDTO.phoneMAccount());
-					
-					clientWallet.setAmount(clientWallet.getAmount() + (depositDTO.amount() - amountToRefund));
-					deposit.setClient(client);
-					
-					deposit.setDateDeposit(LocalDate.now());
-					deposit.setTimeDeposit(LocalTime.now());
-					
-					moneyAccountRepository.save(moneyAccount);
-					walletRepository.save(clientWallet);
-					
-					depositRepository.save(deposit);
-					
-					setHistory("Deposit of "+depositDTO.amount(), "SUCCESS", client);
-					
-					return;
+					if (autoRefund.isEnded()){
+						lastCredit.setActive(false);
+						creditRepository.save(lastCredit);
+					}
 				}
-				
 			}
 		}
 		
-		Deposit deposit = new Deposit();
+		// --- Exécution de la transaction de dépôt (logique unique) ---
 		
+		// Déduire le montant total du compte monétaire
+		moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
+		moneyAccountRepository.save(moneyAccount);
+		
+		// Créditer le montant restant au portefeuille
+		client.getWallet().setAmount(client.getWallet().getAmount() + amountForWallet);
+		walletRepository.save(client.getWallet());
+		
+		// Créer et sauvegarder l'objet Deposit
+		Deposit deposit = new Deposit();
 		deposit.setAmount(depositDTO.amount());
 		deposit.setDescription(depositDTO.description());
-		
-		moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
 		deposit.setmAccountNumber(depositDTO.phoneMAccount());
-		
-		clientWallet.setAmount(clientWallet.getAmount() + depositDTO.amount());
 		deposit.setClient(client);
-		
 		deposit.setDateDeposit(LocalDate.now());
 		deposit.setTimeDeposit(LocalTime.now());
 		
-		moneyAccountRepository.save(moneyAccount);
-		walletRepository.save(clientWallet);
-		
 		depositRepository.save(deposit);
-
-		setHistory("Deposit of "+depositDTO.amount(), "SUCCESS", client);
+		
+		setHistory("Deposit of " + depositDTO.amount(), "SUCCESS", client);
 	}
 	
-	public Deposit getDeposit(int clientID, int depositID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
-		}
-		
-		Client client = optionalClient.get();
+	// --- Méthodes de recherche inchangées ---
+	public Deposit getDeposit(int clientID, int depositID) {
+		Client client = clientRepository.findById(clientID)
+			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 		
 		Deposit deposit = depositRepository.findByClient_IdAndId(clientID, depositID);
-		
-		if (deposit == null){
-			throw new IllegalArgumentException(client.getName()+" has made no deposit at this ID: "+depositID);
+		if (deposit == null) {
+			throw new IllegalArgumentException(client.getName() + " has made no deposit at this ID: " + depositID);
 		}
-		
 		return deposit;
 	}
 	
-	public List<Deposit> getAllDeposit(int clientID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
+	public List<Deposit> getAllDeposit(int clientID) {
+		Client client = clientRepository.findById(clientID)
+			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
+		List<Deposit> listDeposit = depositRepository.findAllByClientId(clientID);
+		if (listDeposit.isEmpty()) {
+			throw new IllegalArgumentException(client.getName() + " has made no deposit yet.");
 		}
-		
-		Client client = optionalClient.get();
-		
-		List<Deposit>listDeposit = depositRepository.findAllByClientId(clientID);
-		if (listDeposit.isEmpty()){
-			throw new IllegalArgumentException(client.getName()+" has made no deposit yet.");
-		}
-		
 		return listDeposit;
 	}
-
-	private void setHistory(String description, String status, Client client){
+	
+	private void setHistory(String description, String status, Client client) {
 		History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
-
 		historyRepository.save(history);
 	}
-	
 }
