@@ -40,7 +40,7 @@ public class Client {
 		this.mail = mail;
 		this.password = password;
 		this.moneyAccountList = moneyAccountList;
-                this.wallet = wallet;
+		this.wallet = wallet;
     }
 
 //	------------------------------------------------------------------------------------------------------------
@@ -81,6 +81,7 @@ public class Client {
 		this.moneyAccountList = moneyAccountList;
 	}
 
+
     public Wallet getWallet() {
         return wallet;
     }
@@ -88,5 +89,4 @@ public class Client {
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
     }
-    
 }
