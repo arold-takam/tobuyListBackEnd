@@ -30,7 +30,7 @@ public class Credit {
 	@Column(name = "wallet_receiver")
 	private int walletReceiverID;
 	
-	@Column(name = "amountRefund")
+	@Column(name = "amount_Refund")
 	private double amountRefund;
 	
 	@Column(name = "is_active")

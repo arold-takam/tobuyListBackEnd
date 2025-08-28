@@ -58,65 +58,6 @@ public class DepositService {
 		
 		double amountForWallet = depositDTO.amount(); // Montant initial à créditer au portefeuille
 		
-		// Vérifier s'il y a un crédit en retard pour le client
-		List<Credit> activeCredits = creditRepository.findAllByClient(client);
-		
-		// On ne gère que le dernier crédit en retard selon votre logique métier
-		Credit lastCredit = activeCredits.isEmpty() ? null : activeCredits.get(activeCredits.size() - 1);
-		
-		if (lastCredit != null && lastCredit.isActive()) {
-			double remainingAmountToRefund = lastCredit.getCreditOffer().getLimitationCreditAmount() - lastCredit.getAmountRefund();
-			
-			// Si le crédit n'est pas entièrement remboursé
-			if (remainingAmountToRefund > 0) {
-				// Vérifier si le crédit est en retard
-				boolean isLate = LocalDate.now().isAfter(lastCredit.getDateCredit().plusDays(lastCredit.getCreditOffer().getCreditDelay()));
-				
-				if(isLate) {
-					// Calculer le montant à prélever sur le dépôt, dans la limite du montant restant dû
-					double amountToTakeFromDeposit = Math.min(depositDTO.amount(), remainingAmountToRefund);
-					
-					// Calculer la pénalité proportionnelle
-					double taxRate = lastCredit.getCreditOffer().getTaxAfterDelay();
-					
-					// Correction de la pénalité pour qu'elle corresponde à la logique métier
-					double penalty = amountToTakeFromDeposit * taxRate;
-					
-					double totalAmountForRefund = amountToTakeFromDeposit + penalty;
-					
-					// Ajout de la sécurité métier pour éviter que le prélèvement dépasse le dépôt
-					if (totalAmountForRefund > depositDTO.amount()) {
-						totalAmountForRefund = depositDTO.amount();
-						amountToTakeFromDeposit = depositDTO.amount() / (1 + taxRate);
-						penalty = depositDTO.amount() - amountToTakeFromDeposit;
-					}
-					
-					// Déduire du montant à créditer au portefeuille
-					amountForWallet = depositDTO.amount() - totalAmountForRefund;
-					
-					// Mettre à jour le crédit
-					lastCredit.setAmountRefund(lastCredit.getAmountRefund() + totalAmountForRefund);
-					creditRepository.save(lastCredit);
-					
-					// Créer un enregistrement de remboursement automatique
-					Refund autoRefund = new Refund();
-					autoRefund.setDescription("Prélèvement automatique pour crédit en retard");
-					autoRefund.setCredit(lastCredit);
-					autoRefund.setAmount(totalAmountForRefund);
-					autoRefund.setDateRefund(LocalDate.now());
-					autoRefund.setTimeRefund(LocalTime.now());
-					autoRefund.setEnded(lastCredit.getAmountRefund() >= lastCredit.getCreditOffer().getLimitationCreditAmount());
-					
-					refundRepository.save(autoRefund);
-					
-					if (autoRefund.isEnded()){
-						lastCredit.setActive(false);
-						creditRepository.save(lastCredit);
-					}
-				}
-			}
-		}
-		
 		// --- Exécution de la transaction de dépôt (logique unique) ---
 		
 		// Déduire le montant total du compte monétaire
