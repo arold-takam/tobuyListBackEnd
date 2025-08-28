@@ -57,15 +57,7 @@ public class DepositService {
 		// --- Logique unifiée pour le dépôt et la pénalité ---
 		
 		double amountForWallet = depositDTO.amount(); // Montant initial à créditer au portefeuille
-		
-		// Vérifier s'il y a un crédit en retard pour le client
-		List<Credit> activeCredits = creditRepository.findAllByClient(client);
-		
-		// On ne gère que le dernier crédit en retard selon votre logique métier
-		Credit lastCredit = activeCredits.isEmpty() ? null : activeCredits.getLast();
-		
 
-		
 		// --- Exécution de la transaction de dépôt (logique unique) ---
 		
 		// Déduire le montant total du compte monétaire
