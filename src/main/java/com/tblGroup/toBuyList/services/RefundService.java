@@ -57,36 +57,21 @@ public class RefundService {
 	}
 	
 	// --- PRIVATE HELPER METHODS ---
-	private void processRefund(Credit credit, double initialAmount, String description, Wallet wallet, MoneyAccount moneyAccount) {
-		// Calcul de la pénalité si le remboursement est en retard
-		double totalAmountToDebit = initialAmount;
-		LocalDate dateCredit = credit.getDateCredit();
+	private void processRefund(Credit credit, double amountToDebit, String description, Wallet wallet, MoneyAccount moneyAccount) {
 		LocalDate dateRefund = LocalDate.now();
-		
-		long realDelay = ChronoUnit.DAYS.between(dateCredit, dateRefund);
-		int creditDelay = credit.getCreditOffer().getCreditDelay();
-		
-		// Vérifie si le crédit est en retard
-		if (realDelay > creditDelay) {
-			long daysLate = realDelay - creditDelay;
-			
-			double penalty = initialAmount * credit.getCreditOffer().getTaxAfterDelay() * daysLate;
-			totalAmountToDebit += penalty;
-			description += " (avec pénalité)";
-		}
-		
+
 		// Vérification du solde et déduction du compte
 		if (wallet != null) {
-			if (wallet.getAmount() < totalAmountToDebit) {
+			if (wallet.getAmount() < amountToDebit) {
 				throw new IllegalArgumentException("Insufficient wallet balance.");
 			}
-			wallet.setAmount(wallet.getAmount() - totalAmountToDebit);
+			wallet.setAmount(wallet.getAmount() - amountToDebit);
 			walletRepository.save(wallet);
 		} else if (moneyAccount != null) {
-			if (moneyAccount.getAmount() < totalAmountToDebit) {
+			if (moneyAccount.getAmount() < amountToDebit) {
 				throw new IllegalArgumentException("Insufficient money account balance.");
 			}
-			moneyAccount.setAmount(moneyAccount.getAmount() - totalAmountToDebit);
+			moneyAccount.setAmount(moneyAccount.getAmount() - amountToDebit);
 			moneyAccountRepository.save(moneyAccount);
 		} else {
 			throw new IllegalArgumentException("No valid account provided for refund.");
@@ -94,7 +79,7 @@ public class RefundService {
 		
 		// Mise à jour du crédit
 		double creditLimit = credit.getCreditOffer().getLimitationCreditAmount();
-		double totalAfterRefund = credit.getAmountRefund() + totalAmountToDebit;
+		double totalAfterRefund = credit.getAmountRefund() + amountToDebit;
 		
 		if (totalAfterRefund > creditLimit) {
 			throw new IllegalArgumentException("Refund exceeds the credit limit.");
@@ -111,7 +96,7 @@ public class RefundService {
 		refund.setMoneyAccountNumber(moneyAccount != null ? moneyAccount.getPhone() : null);
 		refund.setDateRefund(dateRefund);
 		refund.setTimeRefund(LocalTime.now());
-		refund.setAmount(totalAmountToDebit);
+		refund.setAmount(amountToDebit);
 		refund.setEnded(totalAfterRefund >= creditLimit);
 		
 		refundRepository.save(refund);
