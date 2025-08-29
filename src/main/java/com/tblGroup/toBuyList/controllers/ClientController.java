@@ -34,6 +34,7 @@ public class ClientController {
 			
 			return new ResponseEntity<>(savedClient, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

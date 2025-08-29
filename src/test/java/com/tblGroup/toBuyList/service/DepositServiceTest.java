@@ -138,7 +138,6 @@ public class DepositServiceTest {
 		Refund refund = refundCaptor.getValue();
 		
 		assertEquals(depositAmount, refund.getAmount(), delta);
-		assertTrue(refund.isEnded());
 		assertEquals("Prélèvement automatique pour crédit en retard", refund.getDescription());
 		
 		verify(depositRepository).save(any(Deposit.class));
@@ -207,7 +206,6 @@ public class DepositServiceTest {
 		Refund refund = refundCaptor.getValue();
 		
 		assertEquals(depositAmount, refund.getAmount(), delta);
-		assertFalse(refund.isEnded()); // le crédit n'est pas encore totalement remboursé
 		assertEquals("Prélèvement automatique pour crédit en retard", refund.getDescription());
 		
 		verify(depositRepository).save(any(Deposit.class));

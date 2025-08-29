@@ -5,6 +5,7 @@ import com.tblGroup.toBuyList.models.CreditOffer;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.repositories.CreditOfferRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +65,8 @@ public class CreditOfferService {
 		
 		creditOfferRepository.save(creditOffer);
 	}
-	
+
+	@Transactional
 	public boolean deleteCreditOffer(TitleCreditOffer titleCreditOffer) {
 		CreditOffer creditOffer = creditOfferRepository.findByTitleCreditOffer(titleCreditOffer);
 		

@@ -21,27 +21,30 @@ public class CreditService {
 	private final ClientService clientService;
 	private final CreditOfferService creditOfferService;
 	private final HistoryRepository historyRepository;
-	private final RefundService refundService;
-	
-	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository, RefundService refundService) {
+
+	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository) {
 		this.creditRepository = creditRepository;
 		this.clientService = clientService;
 		this.creditOfferService = creditOfferService;
         this.moneyAccountRepository = moneyAccountRepository;
         this.walletRepository = walletRepository;
         this.historyRepository = historyRepository;
-		this.refundService = refundService;
+
 	}
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
 	public void makeCreditToMoneyAccount(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest1DTO creditRequest1DTO) {
 		
 		Client client = clientService.getClientById(clientSenderID);
+		if (creditOfferTitle == null) {
+			throw new IllegalArgumentException("This credit offer not found");
+		}
 		
 		List<Credit>creditList = creditRepository.findAllByClient(client);
 		
 		if (!creditList.isEmpty()) {
 			Credit lastCredit = creditList.getLast();
+
 			if (lastCredit.isActive()) {
 				setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
 				throw new IllegalArgumentException("Client already has an active credit");
@@ -50,14 +53,8 @@ public class CreditService {
 		
 		MoneyAccount moneyAccountReceiver = moneyAccountRepository.findByPhone(creditRequest1DTO.receiverAccountPhone());
 		
-		if (creditOfferTitle == null) {
-			throw new IllegalArgumentException("This credit offer not found");
-		}
-		
 		CreditOffer creditOffer = creditOfferService.getCreditOfferByTitle(creditOfferTitle);
-		
 
-		
 		if (moneyAccountReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			moneyAccountReceiver.setAmount(moneyAccountReceiver.getAmount() + creditAmount);
@@ -97,12 +94,6 @@ public class CreditService {
 			}
 		}
 
-		Wallet walletSender = client.getWallet();
-		
-		if (walletSender == null) {
-			throw new IllegalArgumentException("This client has no wallet yet");
-		}
-		
 		Wallet walletReceiver = walletRepository.findByWalletNumber(creditRequest2DTO.walletReceiverNumber());
 		
 		if (creditOfferTitle == null) {

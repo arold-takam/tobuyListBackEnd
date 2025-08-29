@@ -19,18 +19,16 @@ public class DepositService {
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final HistoryRepository historyRepository;
-	private final CreditRepository creditRepository;
-	private final RefundRepository refundRepository;
-	
-	
-	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryRepository historyRepository, CreditRepository creditRepository, RefundRepository refundRepository) {
+
+
+
+	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryRepository historyRepository) {
 		this.clientRepository = clientRepository;
 		this.walletRepository = walletRepository;
 		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.historyRepository = historyRepository;
-		this.creditRepository = creditRepository;
-		this.refundRepository = refundRepository;
+
 	}
 	
 	@Transactional

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,68 +25,58 @@ public class RefundService {
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final ClientRepository clientRepository;
+	private final HistoryRepository historyRepository;
 	
 	// Removed ClientService dependency here as it's no longer used in the main logic
 	
-	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository) {
+	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository, HistoryRepository historyRepository) {
 		this.refundRepository = refundRepository;
 		this.creditRepository = creditRepository;
 		this.walletRepository = walletRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.clientRepository = clientRepository;
-	}
+        this.historyRepository = historyRepository;
+    }
 	
 	// --- REFUND MANAGEMENT ---
 	@Transactional
 	public void makeRefundByWallet(int creditID, RefundRequestByWalletDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
-		
+
+
+		CreditOffer creditOffer = credit.getCreditOffer();
+		Client client = credit.getClient();
+		Wallet wallet = client.getWallet();
+		double amountCredited = creditOffer.getLimitationCreditAmount();
+		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
+		double amountRefund = credit.getAmountRefund();
+		int difference = (int)(amountToRefund - amountRefund);
+
 		if (!credit.isActive()){
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 
-		Wallet wallet = credit.getClient().getWallet();
-		
-		if (wallet == null){
-			throw new IllegalArgumentException("This wallet doesn't exist");
-		}
-
-		Client client = credit.getClient();
-
-		if (client == null){
-			throw new IllegalArgumentException("This client doesn't exist");
-		}
-
-		CreditOffer creditOffer = credit.getCreditOffer();
-		if (creditOffer == null){
-			throw new IllegalArgumentException("This credit offer doesnt exist in the system");
-		}
-
-		double amountCredited = creditOffer.getLimitationCreditAmount();
-		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
-
-		double amountRefund = credit.getAmountRefund();
-		double difference = amountToRefund - amountRefund;
-		if (difference == 0){
-			credit.setActive(false);
-			creditRepository.save(credit);
-
-			throw new IllegalArgumentException("This credit is already closed, you are clean.");
-		}
-
 		if (request.amount() <= 0 || request.amount() > difference){
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		if (wallet.getAmount() < request.amount()) {
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient wallet balance for this refund.");
 		}
-		wallet.setAmount(wallet.getAmount() - request.amount());
-		walletRepository.save(wallet);
 
+		if ((int)request.amount() == difference){
+			credit.setActive(false);
+		}
 
 		credit.setAmountRefund(credit.getAmountRefund() + request.amount());
+		creditRepository.save(credit);
+
+		wallet.setAmount(wallet.getAmount() - request.amount());
+		walletRepository.save(wallet);
 
 		Refund refund = new Refund();
 		refund.setDescription(request.description());
@@ -95,16 +86,8 @@ public class RefundService {
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(request.amount());
 
-		if (request.amount() == difference){
-			credit.setActive(false);
-
-			refund.setEnded(true);
-		}else {
-			refund.setEnded(false);
-		}
-		creditRepository.save(credit);
-
 		refundRepository.save(refund);
+		setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 	
@@ -112,49 +95,40 @@ public class RefundService {
 	public void makeRefundByMoneyAccount(int creditID, RefundRequestByMoneyAccountDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
-		
-		if (!credit.isActive()){
-			throw new IllegalArgumentException("This credit is already refund.");
-		}
 
-		Client client = credit.getClient();
 
-		if (client == null){
-			throw new IllegalArgumentException("This client doesn't exist");
-		}
-
-		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
-		if (moneyAccount == null){
-			throw new IllegalArgumentException("This moneyAccount doesn't exist");
-		}
-		
 		CreditOffer creditOffer = credit.getCreditOffer();
-		if (creditOffer == null){
-			throw new IllegalArgumentException("This credit offer doesnt exist in the system");
-		}
+        Client client = credit.getClient();
 
 		double amountCredited = creditOffer.getLimitationCreditAmount();
 		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
 
 		double amountRefund = credit.getAmountRefund();
-		double difference = amountToRefund - amountRefund;
-		if (difference == 0){
-			credit.setActive(false);
-			creditRepository.save(credit);
+		int difference = (int)(amountToRefund - amountRefund);
 
-			throw new IllegalArgumentException("This credit is already closed, you are clean.");
+		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
+		if(moneyAccount == null){
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			throw new IllegalArgumentException("This moneyAccount doesn't exist");
 		}
+		if(!credit.isActive()){
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			throw new IllegalArgumentException("This credit is already refund.");
+		}
+		
+
 
 		if (request.amount() <= 0 || request.amount() > difference){
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		if (moneyAccount.getAmount() < request.amount()) {
+			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient moneyAccount balance for this refund.");
 		}
 		moneyAccount.setAmount(moneyAccount.getAmount() - request.amount());
 		moneyAccountRepository.save(moneyAccount);
-
 
 		credit.setAmountRefund(credit.getAmountRefund() + request.amount());
 
@@ -166,20 +140,24 @@ public class RefundService {
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(request.amount());
 
-		if (request.amount() == difference){
+		if ((int)request.amount() == difference){
 			credit.setActive(false);
-
-			refund.setEnded(true);
-		}else {
-			refund.setEnded(false);
 		}
+
 		creditRepository.save(credit);
 		
 		refundRepository.save(refund);
+		setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 
-	@Scheduled(fixedRate = 60000) // S'exécute toutes les 60 secondes
+
+	private void setHistory(String description, String status, Client client) {
+		History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
+		historyRepository.save(history);
+	}
+
+	@Scheduled(fixedRate = 86400) // S'exécute toutes les 24h
 	@Transactional
 	public void autoRefundLoading() {
 		// 1. Trouver le crédit le plus récent qui est actif et en retard
@@ -226,7 +204,6 @@ public class RefundService {
 		refund.setDateRefund(LocalDate.now());
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(amountToTake);
-		refund.setEnded(isFullyRefunded);
 		refundRepository.save(refund);
 	}
 	
