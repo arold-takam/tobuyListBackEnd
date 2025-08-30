@@ -30,6 +30,7 @@ public class ClientService {
 	
 //	------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
+	@Transactional
 	public Client createClient(ClientDTO client){
 		Wallet wallet = new Wallet();
 		Client clientSaved = new Client();
@@ -37,6 +38,11 @@ public class ClientService {
 		clientSaved.setMail(client.mail());
 		clientSaved.setPassword(client.password());
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
+
+		if(clientRepository.existsByMail(client.mail())){
+			throw new IllegalArgumentException("Email already exists");
+		}
+
 		walletRepository.save(wallet);
 		clientSaved.setWallet(wallet);
 		return clientRepository.save(clientSaved);

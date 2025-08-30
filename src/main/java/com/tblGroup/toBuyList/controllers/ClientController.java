@@ -34,6 +34,7 @@ public class ClientController {
 			
 			return new ResponseEntity<>(savedClient, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -45,6 +46,7 @@ public class ClientController {
 			
 			return new ResponseEntity<>(foundClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -63,8 +65,10 @@ public class ClientController {
 			
 			return  new ResponseEntity<>(updatedClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -77,6 +81,7 @@ public class ClientController {
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 			
 		} catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -90,8 +95,10 @@ public class ClientController {
 
 			return new ResponseEntity<>(wallet, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

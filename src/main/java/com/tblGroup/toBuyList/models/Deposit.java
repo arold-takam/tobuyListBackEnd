@@ -19,7 +19,6 @@ public class Deposit {
 	@Column(name = "description")
 	private String description;
 
-
 	@Column(name = "m_Account_Number", nullable = false, length = 9)
 	private String mAccountNumber;
 	

@@ -8,6 +8,7 @@ import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -45,6 +46,10 @@ public class HistoryService {
         Client client = clientService.getClientById(clientId);
 
         historyRepository.deleteAllByClient(client);
+    }
 
+    public void setHistory(String description, String status, Client client){
+        History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
+        historyRepository.save(history);
     }
 }

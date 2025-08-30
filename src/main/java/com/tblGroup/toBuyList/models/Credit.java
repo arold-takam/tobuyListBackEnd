@@ -40,7 +40,7 @@ public class Credit {
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "credit_offer", nullable = false)
 	private CreditOffer creditOffer;
 	
@@ -48,7 +48,7 @@ public class Credit {
 	
 	}
 	
-	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int receiverAccountID, int walletReceiverID, double amountToRefund, boolean active, Client client, CreditOffer creditOffer) {
+	public Credit(String description, LocalDate dateCredit, LocalTime timeCredit, int receiverAccountID, int walletReceiverID, double amountRefund, boolean active, Client client, CreditOffer creditOffer) {
 		this.description = description;
 		this.dateCredit = dateCredit;
 		this.timeCredit = timeCredit;
