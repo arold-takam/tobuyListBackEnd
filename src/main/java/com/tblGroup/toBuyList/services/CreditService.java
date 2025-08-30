@@ -5,6 +5,7 @@ import com.tblGroup.toBuyList.dto.CreditRequest2DTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.repositories.*;
+import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,15 +21,15 @@ public class CreditService {
 	
 	private final ClientService clientService;
 	private final CreditOfferService creditOfferService;
-	private final HistoryRepository historyRepository;
+	private final HistoryService historyService;
 
-	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository) {
+	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService) {
 		this.creditRepository = creditRepository;
 		this.clientService = clientService;
 		this.creditOfferService = creditOfferService;
         this.moneyAccountRepository = moneyAccountRepository;
         this.walletRepository = walletRepository;
-        this.historyRepository = historyRepository;
+        this.historyService = historyService;
 
 	}
 	
@@ -46,7 +47,7 @@ public class CreditService {
 			Credit lastCredit = creditList.getLast();
 
 			if (lastCredit.isActive()) {
-				setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
 				throw new IllegalArgumentException("Client already has an active credit");
 			}
 		}
@@ -58,10 +59,10 @@ public class CreditService {
 		if (moneyAccountReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			moneyAccountReceiver.setAmount(moneyAccountReceiver.getAmount() + creditAmount);
-			setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
+			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
 			moneyAccountRepository.save(moneyAccountReceiver);
 		} else {
-			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
 			throw new IllegalArgumentException("This client has no money account to receive the credit");
 		}
 
@@ -89,7 +90,7 @@ public class CreditService {
 		if (!creditList.isEmpty()) {
 			Credit lastCredit = creditList.getLast();
 			if (lastCredit.isActive()) {
-				setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
 				throw new IllegalArgumentException("Client already has an active credit");
 			}
 		}
@@ -106,10 +107,10 @@ public class CreditService {
 		if (walletReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			walletReceiver.setAmount(walletReceiver.getAmount() + creditAmount);
-			setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
+			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
 			walletRepository.save(walletReceiver);
 		} else {
-			setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
 			throw new IllegalArgumentException("This client has no wallet to receive the credit");
 		}
 
@@ -152,9 +153,4 @@ public class CreditService {
         return creditRepository.findAll();
 	}
 
-	private void setHistory(String description, String status, Client client){
-		History history = new History("CREDIT", description, new Date(System.currentTimeMillis()), status, client);
-
-		historyRepository.save(history);
-	}
 }

@@ -34,6 +34,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccountCreated, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -45,6 +46,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -63,6 +65,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -88,8 +91,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -102,8 +107,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

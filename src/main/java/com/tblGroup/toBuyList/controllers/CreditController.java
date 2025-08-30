@@ -53,10 +53,6 @@ public class CreditController {
 			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-//		}catch (Exception e) {
-//			System.out.println(e.getMessage());
-//			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//		}
 	}
 	
 	

@@ -30,8 +30,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -43,8 +45,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(creditOffer, HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -56,8 +60,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(creditOfferList, HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -69,6 +75,7 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
 			System.out.println(e.getMessage());
@@ -87,8 +94,10 @@ public class CreditOfferController {
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}
 		}catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

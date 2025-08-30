@@ -5,6 +5,7 @@ import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
 import com.tblGroup.toBuyList.repositories.*;
+import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -60,11 +61,9 @@ public class TransferService {
             moneyAccountRepository.save(receiverAccount);
             transferRepository.save(transfer);
 
-
         }else{
             throw new IllegalArgumentException("Account not found");
         }
-
 
     }
 

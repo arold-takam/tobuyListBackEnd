@@ -4,19 +4,17 @@ import com.tblGroup.toBuyList.dto.RefundRequestByMoneyAccountDTO;
 import com.tblGroup.toBuyList.dto.RefundRequestByWalletDTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.repositories.*;
+import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class RefundService {
@@ -25,17 +23,17 @@ public class RefundService {
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final ClientRepository clientRepository;
-	private final HistoryRepository historyRepository;
+	private final HistoryService historyService;
 	
 	// Removed ClientService dependency here as it's no longer used in the main logic
 	
-	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository, HistoryRepository historyRepository) {
+	public RefundService(RefundRepository refundRepository, CreditRepository creditRepository, WalletRepository walletRepository, MoneyAccountRepository moneyAccountRepository, ClientRepository clientRepository, HistoryService historyService) {
 		this.refundRepository = refundRepository;
 		this.creditRepository = creditRepository;
 		this.walletRepository = walletRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.clientRepository = clientRepository;
-        this.historyRepository = historyRepository;
+        this.historyService = historyService;
     }
 	
 	// --- REFUND MANAGEMENT ---
@@ -54,17 +52,17 @@ public class RefundService {
 		int difference = (int)(amountToRefund - amountRefund);
 
 		if (!credit.isActive()){
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 
 		if (request.amount() <= 0 || request.amount() > difference){
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		if (wallet.getAmount() < request.amount()) {
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient wallet balance for this refund.");
 		}
 
@@ -87,7 +85,7 @@ public class RefundService {
 		refund.setAmount(request.amount());
 
 		refundRepository.save(refund);
-		setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
+		historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 	
@@ -108,23 +106,23 @@ public class RefundService {
 
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
 		if(moneyAccount == null){
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This moneyAccount doesn't exist");
 		}
 		if(!credit.isActive()){
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 		
 
 
 		if (request.amount() <= 0 || request.amount() > difference){
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		if (moneyAccount.getAmount() < request.amount()) {
-			setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient moneyAccount balance for this refund.");
 		}
 		moneyAccount.setAmount(moneyAccount.getAmount() - request.amount());
@@ -147,16 +145,11 @@ public class RefundService {
 		creditRepository.save(credit);
 		
 		refundRepository.save(refund);
-		setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
+		historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 
-
-	private void setHistory(String description, String status, Client client) {
-		History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
-		historyRepository.save(history);
-	}
-
+	
 	@Scheduled(fixedRate = 86400) // S'exécute toutes les 24h
 	@Transactional
 	public void autoRefundLoading() {
