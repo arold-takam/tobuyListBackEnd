@@ -36,7 +36,7 @@ public class Credit {
 	@Column(name = "is_active")
 	private boolean active;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	

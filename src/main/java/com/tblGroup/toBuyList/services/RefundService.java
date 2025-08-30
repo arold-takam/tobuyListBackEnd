@@ -179,7 +179,7 @@ public class RefundService {
 		
 	}
 	
-	@Scheduled(fixedRate = 60000) // S'exécute toutes les 60 secondes
+	@Scheduled(fixedRate = 86400) // S'exécute toutes les 24 heures
 	@Transactional
 	public void autoRefundLoading() {
 		// 1. Trouver le crédit le plus récent qui est actif et en retard
@@ -194,6 +194,7 @@ public class RefundService {
 		}
 		
 		Credit credit = latestLateCredit.get();
+		
 		Wallet wallet = credit.getClient().getWallet();
 		
 		// 2. Calculer le montant restant à rembourser
