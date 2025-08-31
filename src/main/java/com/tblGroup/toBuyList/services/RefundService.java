@@ -148,57 +148,6 @@ public class RefundService {
 		historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
-
-	
-	@Scheduled(fixedRate = 86400) // S'exécute toutes les 24h
-	@Transactional
-	public void autoRefundLoading() {
-		// 1. Trouver le crédit le plus récent qui est actif et en retard
-		Optional<Credit> latestLateCredit = creditRepository.findAll().stream()
-			.filter(c -> c.isActive() && c.getDateCredit().plusDays(c.getCreditOffer().getCreditDelay()).isBefore(LocalDate.now()))
-			.sorted(Comparator.comparing(Credit::getDateCredit).reversed())
-			.findFirst();
-
-		if (latestLateCredit.isEmpty()) {
-			// Aucun crédit en retard, rien à faire
-			return;
-		}
-
-		Credit credit = latestLateCredit.get();
-		Wallet wallet = credit.getClient().getWallet();
-
-		// 2. Calculer le montant restant à rembourser
-		double totalDue = credit.getCreditOffer().getLimitationCreditAmount() * (1 + credit.getCreditOffer().getTaxAfterDelay());
-		double remainingDue = totalDue - credit.getAmountRefund();
-
-		// 3. Déterminer le montant à prélever
-		double amountToTake = Math.min(wallet.getAmount(), remainingDue);
-
-		// Si rien ne peut être prélevé, ne rien faire
-		if (amountToTake <= 0) {
-			return;
-		}
-
-		// 4. Exécuter le prélèvement
-		wallet.setAmount(wallet.getAmount() - amountToTake);
-		walletRepository.save(wallet);
-
-		// 5. Mettre à jour le crédit
-		credit.setAmountRefund(credit.getAmountRefund() + amountToTake);
-		boolean isFullyRefunded = credit.getAmountRefund() >= totalDue;
-		credit.setActive(!isFullyRefunded);
-		creditRepository.save(credit);
-
-		// 6. Enregistrer le remboursement automatique
-		Refund refund = new Refund();
-		refund.setDescription("Prélèvement automatique en retard");
-		refund.setCredit(credit);
-		refund.setMoneyAccountNumber(" ");
-		refund.setDateRefund(LocalDate.now());
-		refund.setTimeRefund(LocalTime.now());
-		refund.setAmount(amountToTake);
-		refundRepository.save(refund);
-	}
 	
 	// --- GETTING MANAGEMENT (unchanged) ---
 	public Refund getRefundByID(int refundID) {

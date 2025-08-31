@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DepositService {
@@ -18,54 +21,87 @@ public class DepositService {
 	private final WalletRepository walletRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final HistoryService historyService;
-
-
-
-	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryService historyService) {
+	private final CreditRepository creditRepository;
+	private final RefundRepository refundRepository;
+	
+	
+	public DepositService(ClientRepository clientRepository, WalletRepository walletRepository, DepositRepository depositRepository, MoneyAccountRepository moneyAccountRepository, HistoryService historyService, CreditRepository creditRepository, RefundRepository refundRepository) {
 		this.clientRepository = clientRepository;
 		this.walletRepository = walletRepository;
 		this.depositRepository = depositRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.historyService = historyService;
-
+		this.creditRepository = creditRepository;
+		this.refundRepository = refundRepository;
 	}
+	
 	
 	@Transactional
 	public void makeDeposit(int clientID, DepositDTO depositDTO) {
+		// 1. Validation de base
 		Client client = clientRepository.findById(clientID)
 			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 		
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositDTO.phoneMAccount());
-		if (moneyAccount == null) {
+		if (moneyAccount == null || moneyAccount.getAmount() < depositDTO.amount() || depositDTO.amount() <= 0.0) {
 			historyService.setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
-			throw new IllegalArgumentException("Money Account with phone number: " + depositDTO.phoneMAccount() + " not found.");
+			throw new IllegalArgumentException("Invalid deposit or insufficient funds.");
 		}
 		
-		if (depositDTO.amount() <= 0.0) {
-			historyService.setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
-			throw new IllegalArgumentException("This amount is invalid, please try again.");
-		}
-		
-		if (moneyAccount.getAmount() < depositDTO.amount()) {
-			historyService.setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
-			throw new IllegalArgumentException("Your account " + moneyAccount.getName() + " has no sufficient amount for this deposit, please reload it. it balance is: " + moneyAccount.getAmount());
-		}
-		
-		// --- Logique unifiée pour le dépôt et la pénalité ---
-		
-		double amountForWallet = depositDTO.amount(); // Montant initial à créditer au portefeuille
-
-		// --- Exécution de la transaction de dépôt (logique unique) ---
-		
-		// Déduire le montant total du compte monétaire
+		// Débit du compte monétaire, une seule fois
 		moneyAccount.setAmount(moneyAccount.getAmount() - depositDTO.amount());
 		moneyAccountRepository.save(moneyAccount);
 		
-		// Créditer le montant restant au portefeuille
-		client.getWallet().setAmount(client.getWallet().getAmount() + amountForWallet);
-		walletRepository.save(client.getWallet());
+		// Déterminer le montant qui ira au portefeuille après le potentiel remboursement
+		double amountForWallet = depositDTO.amount();
 		
-		// Créer et sauvegarder l'objet Deposit
+		// 2. Logique de remboursement automatique (DOIT ÊTRE FAITE AVANT LE CRÉDIT AU WALLET)
+		Optional<Credit> lateCreditOpt = creditRepository.findAllByClient(client).stream()
+			.filter(c -> c.isActive() && c.getDateCredit().plusDays(c.getCreditOffer().getCreditDelay()).isBefore(LocalDate.now()))
+			.sorted(Comparator.comparing(Credit::getDateCredit).reversed())
+			.findFirst();
+		
+		if (lateCreditOpt.isPresent()) {
+			Credit credit = lateCreditOpt.get();
+			CreditOffer offer = credit.getCreditOffer();
+			
+			double totalToRefund = offer.getLimitationCreditAmount() * (1 + offer.getTaxAfterDelay());
+			double alreadyRefunded = credit.getAmountRefund();
+			double remaining = totalToRefund - alreadyRefunded;
+			
+			// Le montant à prélever est le MIN de ce qui reste et de ce qui est déposé
+			double amountToTake = Math.min(depositDTO.amount(), remaining);
+			
+			if (amountToTake > 0) {
+				// Mise à jour du crédit
+				credit.setAmountRefund(alreadyRefunded + amountToTake);
+				boolean isFullyRefunded = credit.getAmountRefund() >= totalToRefund;
+				credit.setActive(!isFullyRefunded);
+				creditRepository.save(credit);
+				
+				// Enregistrement du refund automatique
+				Refund refund = new Refund();
+				refund.setDescription("Auto refund triggered by deposit");
+				refund.setCredit(credit);
+				refund.setMoneyAccountNumber(depositDTO.phoneMAccount());
+				refund.setDateRefund(LocalDate.now());
+				refund.setTimeRefund(LocalTime.now());
+				refund.setAmount(amountToTake);
+				refundRepository.save(refund);
+				
+				historyService.setHistory("Auto refund of " + amountToTake + " triggered by deposit", "SUCCESS", client);
+				
+				// Mettre à jour le montant final qui ira au portefeuille
+				amountForWallet -= amountToTake;
+			}
+		}
+		
+		// 3. Crédit du wallet avec le montant ajusté
+		Wallet wallet = client.getWallet();
+		wallet.setAmount(wallet.getAmount() + amountForWallet);
+		walletRepository.save(wallet);
+		
+		// 4. Enregistrement du dépôt
 		Deposit deposit = new Deposit();
 		deposit.setAmount(depositDTO.amount());
 		deposit.setDescription(depositDTO.description());
@@ -73,7 +109,6 @@ public class DepositService {
 		deposit.setClient(client);
 		deposit.setDateDeposit(LocalDate.now());
 		deposit.setTimeDeposit(LocalTime.now());
-		
 		depositRepository.save(deposit);
 		
 		historyService.setHistory("Deposit of " + depositDTO.amount(), "SUCCESS", client);
