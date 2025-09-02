@@ -17,4 +17,6 @@ public interface CreditRepository extends JpaRepository<Credit, Integer> {
 	List<Credit> findAllByDateCredit(LocalDate dateCredit);
 	
 	List<Credit> findAllByClient(Client client);
+	
+	Credit findByClient_Id(int clientID);
 }

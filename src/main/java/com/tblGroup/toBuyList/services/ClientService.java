@@ -33,7 +33,9 @@ public class ClientService {
 	@Transactional
 	public Client createClient(ClientDTO client){
 		Wallet wallet = new Wallet();
+		
 		Client clientSaved = new Client();
+		
 		clientSaved.setName(client.name());
 		clientSaved.setMail(client.mail());
 		clientSaved.setPassword(client.password());
@@ -45,17 +47,12 @@ public class ClientService {
 
 		walletRepository.save(wallet);
 		clientSaved.setWallet(wallet);
+		
 		return clientRepository.save(clientSaved);
 	}
 	
 	public Client getClientById(int id){
-		Optional<Client>optionalClient =  clientRepository.findById(id);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
-		}
-		
-		return optionalClient.get();
+		return getExistingClient(id);
 	}
 	
 	public List<Client>getAllClients(){
@@ -63,36 +60,22 @@ public class ClientService {
 	}
 	
 	public Client updateClient(int id, ClientDTO newClient) throws Exception {
-		Optional<Client>optionalClient =  clientRepository.findById(id);
+		Client existingClient = getExistingClient(id) ;
 		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+id+" not found");
-		}
+		existingClient.setName(newClient.name());
+		existingClient.setMail(newClient.mail());
+		existingClient.setPassword(newClient.password());
 		
-		Client existingClient = optionalClient.get();
-		
-		if (newClient != null){
-			existingClient.setName(newClient.name());
-			existingClient.setMail(newClient.mail());
-			existingClient.setPassword(newClient.password());
-			
-			return clientRepository.save(existingClient);
-		}
-		
-		throw  new Exception("Invalid client info, try gain.");
+		return clientRepository.save(existingClient);
 	}
 
 
 	public void deleteClient(int id){
-		Optional<Client>optionalClient =  clientRepository.findById(id);
-
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+id+" not found.");
-		}
+		Client clientToDelete = getExistingClient(id);
 
 		transferRepository.deleteByClient_id(id);
 		clientRepository.deleteById(id);
-		walletRepository.deleteById(optionalClient.get().getWallet().getId());
+		walletRepository.deleteById(clientToDelete.getWallet().getId());
 
 	}
 	
@@ -107,19 +90,22 @@ public class ClientService {
 		return walletNumber;
 	}
 
-	//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
+//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
 
 	public Wallet getWallet(int clientID){
-		Optional<Client>optionalClient = clientRepository.findById(clientID);
-
+		return getExistingClient(clientID).getWallet();
+	}
+	
+	
+//----------------------------------------UTILITY FUNCTIONS---------------------------------------------------------------------------------------------------------
+	private Client getExistingClient(int clientID){
+		Optional<Client>optionalClient =  clientRepository.findById(clientID);
+		
 		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("No client found at the ID: "+clientID);
+			throw new IllegalArgumentException("Client with ID: "+clientID+" not found");
 		}
-
-		Client client = optionalClient.get();
-
-
-		return client.getWallet();
+		
+		return optionalClient.get();
 	}
 
 }

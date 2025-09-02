@@ -5,57 +5,44 @@ import com.tblGroup.toBuyList.dto.CreditRequest2DTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.repositories.*;
-import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CreditService {
 	private final CreditRepository creditRepository;
-    private final MoneyAccountRepository moneyAccountRepository;
-    private final WalletRepository walletRepository;
+	private final MoneyAccountRepository moneyAccountRepository;
+	private final WalletRepository walletRepository;
 	
 	private final ClientService clientService;
 	private final CreditOfferService creditOfferService;
 	private final HistoryService historyService;
-
-	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService) {
+	private final ClientRepository clientRepository;
+	
+	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, ClientRepository clientRepository) {
 		this.creditRepository = creditRepository;
 		this.clientService = clientService;
 		this.creditOfferService = creditOfferService;
-        this.moneyAccountRepository = moneyAccountRepository;
-        this.walletRepository = walletRepository;
-        this.historyService = historyService;
-
+	        this.moneyAccountRepository = moneyAccountRepository;
+	        this.walletRepository = walletRepository;
+	        this.historyService = historyService;
+		this.clientRepository = clientRepository;
 	}
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
 	public void makeCreditToMoneyAccount(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest1DTO creditRequest1DTO) {
+		CreditOffer creditOffer = getCreditOfferFromService(creditOfferTitle);
 		
-		Client client = clientService.getClientById(clientSenderID);
-		if (creditOfferTitle == null) {
-			throw new IllegalArgumentException("This credit offer not found");
-		}
+		Client client = getAndValidateClientByID(clientSenderID);
 		
-		List<Credit>creditList = creditRepository.findAllByClient(client);
-		
-		if (!creditList.isEmpty()) {
-			Credit lastCredit = creditList.getLast();
-
-			if (lastCredit.isActive()) {
-				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
-				throw new IllegalArgumentException("Client already has an active credit");
-			}
-		}
+		validateLastCredit_client(client, creditOfferTitle);
 		
 		MoneyAccount moneyAccountReceiver = moneyAccountRepository.findByPhone(creditRequest1DTO.receiverAccountPhone());
 		
-		CreditOffer creditOffer = creditOfferService.getCreditOfferByTitle(creditOfferTitle);
-
 		if (moneyAccountReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			moneyAccountReceiver.setAmount(moneyAccountReceiver.getAmount() + creditAmount);
@@ -65,45 +52,19 @@ public class CreditService {
 			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
 			throw new IllegalArgumentException("This client has no money account to receive the credit");
 		}
-
-
-		Credit credit = new Credit();
-		credit.setReceiverAccountID(moneyAccountReceiver.getId());
-		credit.setDescription(creditRequest1DTO.description());
-		credit.setDateCredit(LocalDate.now());
-		credit.setTimeCredit(LocalTime.now());
-		credit.setAmountRefund(0);
-		credit.setActive(true);
-		credit.setClient(client);
-		credit.setCreditOffer(creditOffer);
 		
-		creditRepository.save(credit);
-		
+		Credit credit = buildCredit(client, creditOffer, creditRequest1DTO.description());
 	}
 	
 	public void makeCreditToWallet(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest2DTO creditRequest2DTO) {
+		Client client = getAndValidateClientByID(clientSenderID);
 		
-		Client client = clientService.getClientById(clientSenderID);
-		
-		List<Credit>creditList = creditRepository.findAllByClient(client);
-		
-		if (!creditList.isEmpty()) {
-			Credit lastCredit = creditList.getLast();
-			if (lastCredit.isActive()) {
-				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
-				throw new IllegalArgumentException("Client already has an active credit");
-			}
-		}
+		CreditOffer creditOffer = getCreditOfferFromService(creditOfferTitle);
+
+		validateLastCredit_client(client, creditOfferTitle);
 
 		Wallet walletReceiver = walletRepository.findByWalletNumber(creditRequest2DTO.walletReceiverNumber());
 		
-		if (creditOfferTitle == null) {
-			throw new IllegalArgumentException("This credit offer not found");
-		}
-		
-		CreditOffer creditOffer = creditOfferService.getCreditOfferByTitle(creditOfferTitle);
-		
-
 		if (walletReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			walletReceiver.setAmount(walletReceiver.getAmount() + creditAmount);
@@ -114,43 +75,67 @@ public class CreditService {
 			throw new IllegalArgumentException("This client has no wallet to receive the credit");
 		}
 
+		Credit credit = buildCredit(client, creditOffer, creditRequest2DTO.description());
+	}
+	
+//	GETTING MANAGEMENT----------------------------------------------------------------------------------------------------------------------------------------------------------
+	public Credit getCreditByClientID(int clientID) {
+		Client client  = getAndValidateClientByID(clientID);
+		
+		return creditRepository.findByClient_Id(client.getId());
+	}
+	
+	public List<Credit> getCreditByDateCredit(LocalDate dateCredit) {
+		return creditRepository.findAllByDateCredit(dateCredit);
+	}
+	
+	public List<Credit> getAllCredits() {
+                return creditRepository.findAll();
+	}
+	
+//------------------------UTILITY METHODS---------------------------------------------------------------------------------------------
+	private Client getAndValidateClientByID(int clientID){
+		Optional<Client>optionalClient = clientRepository.findById(clientID);
+		if (optionalClient.isEmpty()){
+			throw new IllegalArgumentException("This client doesnt exist.");
+		}
+		
+		return optionalClient.get();
+	}
+	
+	private void validateLastCredit_client(Client client, TitleCreditOffer creditOfferTitle){
+		List<Credit>creditList = creditRepository.findAllByClient(client);
+		
+		if (!creditList.isEmpty()) {
+			Credit lastCredit = creditList.getLast();
+			
+			if (lastCredit.isActive()) {
+				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				throw new IllegalArgumentException("Client already has an active credit");
+			}
+		}
+	}
+	
+	private CreditOffer getCreditOfferFromService(TitleCreditOffer creditOfferTitle){
+		if (creditOfferTitle == null) {
+			throw new IllegalArgumentException("This credit offer not found");
+		}
+		
+		return creditOfferService.getCreditOfferByTitle(creditOfferTitle);
+	}
+	
+	private Credit buildCredit(Client client, CreditOffer offer, String description) {
 		Credit credit = new Credit();
 		
-		credit.setWalletReceiverID(walletReceiver.getId());
-		credit.setDescription(creditRequest2DTO.description());
+		credit.setDescription(description);
 		credit.setDateCredit(LocalDate.now());
 		credit.setTimeCredit(LocalTime.now());
 		credit.setAmountRefund(0);
 		credit.setActive(true);
 		credit.setClient(client);
-		credit.setCreditOffer(creditOffer);
+		credit.setCreditOffer(offer);
 		
-		creditRepository.save(credit);
-		
+		return creditRepository.save(credit);
 	}
 	
-//	GETTING MANAGEMENT----------------------------------------------------------------------------------------------------------------------------------------------------------
-	public Credit getCreditByClientID(int clientID) {
-		Client client = clientService.getClientById(clientID);
-		
-		if (creditRepository.findByClient(client).isEmpty()) {
-			throw new IllegalArgumentException("This client has no credit yet");
-		}
-		
-		return creditRepository.findByClient(client).get();
-	}
-	
-	public List<Credit> getCreditByDateCredit(LocalDate dateCredit) {
-		if (creditRepository.findAllByDateCredit(dateCredit).isEmpty()) {
-			throw new IllegalArgumentException("No credit  found for this date");
-		}
-		
-		return creditRepository.findAllByDateCredit(dateCredit);
-	}
-	
-	public List<Credit> getAllCredits() {
-
-        return creditRepository.findAll();
-	}
-
 }

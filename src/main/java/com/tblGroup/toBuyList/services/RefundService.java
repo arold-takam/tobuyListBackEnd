@@ -4,17 +4,12 @@ import com.tblGroup.toBuyList.dto.RefundRequestByMoneyAccountDTO;
 import com.tblGroup.toBuyList.dto.RefundRequestByWalletDTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.repositories.*;
-import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class RefundService {
@@ -33,7 +28,7 @@ public class RefundService {
 		this.walletRepository = walletRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.clientRepository = clientRepository;
-        this.historyService = historyService;
+                this.historyService = historyService;
     }
 	
 	// --- REFUND MANAGEMENT ---
@@ -41,15 +36,14 @@ public class RefundService {
 	public void makeRefundByWallet(int creditID, RefundRequestByWalletDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
-
+		
+		Client client = credit.getClient();
 
 		CreditOffer creditOffer = credit.getCreditOffer();
-		Client client = credit.getClient();
+		
 		Wallet wallet = client.getWallet();
-		double amountCredited = creditOffer.getLimitationCreditAmount();
-		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
-		double amountRefund = credit.getAmountRefund();
-		int difference = (int)(amountToRefund - amountRefund);
+		
+		int difference = getDifferenceAmount(creditOffer, credit);
 
 		if (!credit.isActive()){
 			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
@@ -94,41 +88,36 @@ public class RefundService {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
 
+		Client client = credit.getClient();
 
 		CreditOffer creditOffer = credit.getCreditOffer();
-        Client client = credit.getClient();
 
-		double amountCredited = creditOffer.getLimitationCreditAmount();
-		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
-
-		double amountRefund = credit.getAmountRefund();
-		int difference = (int)(amountToRefund - amountRefund);
+		int difference =getDifferenceAmount(creditOffer, credit);
 
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
 		if(moneyAccount == null){
 			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This moneyAccount doesn't exist");
 		}
+		
 		if(!credit.isActive()){
 			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
-		
-
 
 		if (request.amount() <= 0 || request.amount() > difference){
 			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
+		credit.setAmountRefund(credit.getAmountRefund() + request.amount());
+		
 		if (moneyAccount.getAmount() < request.amount()) {
 			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient moneyAccount balance for this refund.");
 		}
 		moneyAccount.setAmount(moneyAccount.getAmount() - request.amount());
 		moneyAccountRepository.save(moneyAccount);
-
-		credit.setAmountRefund(credit.getAmountRefund() + request.amount());
 
 		Refund refund = new Refund();
 		refund.setDescription(request.description());
@@ -167,4 +156,14 @@ public class RefundService {
 	public List<Refund> getAllRefunds() {
 		return refundRepository.findAll();
 	}
+	
+//--------------UTILITY METHODS--------------------------------------------------------------------------------------------------------
+	private int getDifferenceAmount(CreditOffer creditOffer, Credit credit){
+		double amountCredited = creditOffer.getLimitationCreditAmount();
+		double amountToRefund = amountCredited * (1 + creditOffer.getTaxAfterDelay());
+		double amountRefund = credit.getAmountRefund();
+		
+		return  (int)(amountToRefund - amountRefund);
+	}
+
 }
