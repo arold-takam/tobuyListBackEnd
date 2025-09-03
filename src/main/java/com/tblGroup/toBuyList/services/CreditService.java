@@ -17,15 +17,13 @@ public class CreditService {
 	private final CreditRepository creditRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final WalletRepository walletRepository;
-	
-	private final ClientService clientService;
+
 	private final CreditOfferService creditOfferService;
 	private final HistoryService historyService;
 	private final ClientRepository clientRepository;
 	
-	public CreditService(CreditRepository creditRepository, ClientService clientService, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, ClientRepository clientRepository) {
+	public CreditService(CreditRepository creditRepository, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, ClientRepository clientRepository) {
 		this.creditRepository = creditRepository;
-		this.clientService = clientService;
 		this.creditOfferService = creditOfferService;
 	        this.moneyAccountRepository = moneyAccountRepository;
 	        this.walletRepository = walletRepository;
@@ -46,14 +44,14 @@ public class CreditService {
 		if (moneyAccountReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			moneyAccountReceiver.setAmount(moneyAccountReceiver.getAmount() + creditAmount);
-			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
+			historyService.setHistory("CREDIT","Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
 			moneyAccountRepository.save(moneyAccountReceiver);
 		} else {
-			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			historyService.setHistory("CREDIT","Subscription to the "+creditOfferTitle+" credit","FAILED",client);
 			throw new IllegalArgumentException("This client has no money account to receive the credit");
 		}
 		
-		Credit credit = buildCredit(client, creditOffer, creditRequest1DTO.description());
+		buildCredit(client, creditOffer, creditRequest1DTO.description());
 	}
 	
 	public void makeCreditToWallet(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest2DTO creditRequest2DTO) {
@@ -68,14 +66,14 @@ public class CreditService {
 		if (walletReceiver != null){
 			double creditAmount = creditOffer.getLimitationCreditAmount();
 			walletReceiver.setAmount(walletReceiver.getAmount() + creditAmount);
-			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
+			historyService.setHistory("CREDIT","Subscription to the "+creditOfferTitle+" credit","SUCCESS",client);
 			walletRepository.save(walletReceiver);
 		} else {
-			historyService.setHistory("Subscription to the "+creditOfferTitle+" credit","FAILED",client);
+			historyService.setHistory("CREDIT","Subscription to the "+creditOfferTitle+" credit","FAILED",client);
 			throw new IllegalArgumentException("This client has no wallet to receive the credit");
 		}
 
-		Credit credit = buildCredit(client, creditOffer, creditRequest2DTO.description());
+		buildCredit(client, creditOffer, creditRequest2DTO.description());
 	}
 	
 //	GETTING MANAGEMENT----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,7 +108,7 @@ public class CreditService {
 			Credit lastCredit = creditList.getLast();
 			
 			if (lastCredit.isActive()) {
-				historyService.setHistory("Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
+				historyService.setHistory("CREDIT","Subscription to the " + creditOfferTitle + " credit", "FAILED", client);
 				throw new IllegalArgumentException("Client already has an active credit");
 			}
 		}
@@ -124,7 +122,7 @@ public class CreditService {
 		return creditOfferService.getCreditOfferByTitle(creditOfferTitle);
 	}
 	
-	private Credit buildCredit(Client client, CreditOffer offer, String description) {
+	private void buildCredit(Client client, CreditOffer offer, String description) {
 		Credit credit = new Credit();
 		
 		credit.setDescription(description);
@@ -134,8 +132,8 @@ public class CreditService {
 		credit.setActive(true);
 		credit.setClient(client);
 		credit.setCreditOffer(offer);
-		
-		return creditRepository.save(credit);
+
+		creditRepository.save(credit);
 	}
 	
 }

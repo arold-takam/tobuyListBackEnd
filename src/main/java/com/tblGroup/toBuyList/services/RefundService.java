@@ -28,7 +28,7 @@ public class RefundService {
 		this.walletRepository = walletRepository;
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.clientRepository = clientRepository;
-                this.historyService = historyService;
+		this.historyService = historyService;
     }
 	
 	// --- REFUND MANAGEMENT ---
@@ -46,17 +46,17 @@ public class RefundService {
 		int difference = getDifferenceAmount(creditOffer, credit);
 
 		if (!credit.isActive()){
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 
 		if (request.amount() <= 0 || request.amount() > difference){
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		if (wallet.getAmount() < request.amount()) {
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient wallet balance for this refund.");
 		}
 
@@ -79,7 +79,7 @@ public class RefundService {
 		refund.setAmount(request.amount());
 
 		refundRepository.save(refund);
-		historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
+		historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 	
@@ -96,24 +96,24 @@ public class RefundService {
 
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(request.moneyAccountNumber());
 		if(moneyAccount == null){
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This moneyAccount doesn't exist");
 		}
 		
 		if(!credit.isActive()){
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 
 		if (request.amount() <= 0 || request.amount() > difference){
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("This amount is invalid, try again.");
 		}
 
 		credit.setAmountRefund(credit.getAmountRefund() + request.amount());
 		
 		if (moneyAccount.getAmount() < request.amount()) {
-			historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
 			throw new IllegalArgumentException("Insufficient moneyAccount balance for this refund.");
 		}
 		moneyAccount.setAmount(moneyAccount.getAmount() - request.amount());
@@ -134,7 +134,7 @@ public class RefundService {
 		creditRepository.save(credit);
 		
 		refundRepository.save(refund);
-		historyService.setHistory("Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
+		historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "SUCCESS", client);
 
 	}
 	

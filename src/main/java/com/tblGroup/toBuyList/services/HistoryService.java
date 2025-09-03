@@ -48,8 +48,9 @@ public class HistoryService {
         historyRepository.deleteAllByClient(client);
     }
 
-    public void setHistory(String description, String status, Client client){
-        History history = new History("DEPOSIT", description, new Date(System.currentTimeMillis()), status, client);
+    public void setHistory(String action, String description, String status, Client client){
+        History history = new History(action, description, new Date(System.currentTimeMillis()), status, client);
+
         historyRepository.save(history);
     }
 }

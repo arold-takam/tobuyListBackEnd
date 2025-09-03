@@ -5,7 +5,6 @@ import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
 import com.tblGroup.toBuyList.repositories.*;
-import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -13,29 +12,29 @@ import java.util.Date;
 @Service
 public class TransferService {
     private final TransferRepository transferRepository;
-    private final ClientRepository clientRepository;
+    private final ClientService clientService;
     private final MoneyAccountRepository moneyAccountRepository;
     private final WalletRepository walletRepository;
-    private final HistoryRepository historyRepository;
+    private final HistoryService historyService;
 
-    public TransferService(TransferRepository transferRepository, ClientRepository clientRepository, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryRepository historyRepository) {
+    public TransferService(TransferRepository transferRepository, ClientService clientService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService) {
         this.transferRepository = transferRepository;
-        this.clientRepository = clientRepository;
+        this.clientService = clientService;
         this.moneyAccountRepository = moneyAccountRepository;
         this.walletRepository = walletRepository;
-        this.historyRepository = historyRepository;
+        this.historyService = historyService;
     }
 
     public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO, TypeTransfer typeTransfer) throws Exception{
 
-        Client client = clientRepository.findById(clientId).orElseThrow(()-> new Exception("client not found"));
+        Client client = clientService.getClientById(clientId);
 
         MoneyAccount receiverAccount = moneyAccountRepository.findByPhone(transferDTO.phone());
 
         Wallet wallet = client.getWallet();
 
        if(transferDTO.amount() <=0 || transferDTO.amount() > wallet.getAmount()){
-           setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "FAILED", client);
+           historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "FAILED", client);
              throw new Exception("amount is incorrect");
         }
 
@@ -55,7 +54,7 @@ public class TransferService {
             wallet.setAmount(wallet.getAmount() - transferDTO.amount());
 
 
-            setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "SUCCESS", client);
+            historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO.amount()+ " to "+transferDTO.phone(), "SUCCESS", client);
 
             walletRepository.save(wallet);
             moneyAccountRepository.save(receiverAccount);
@@ -69,24 +68,24 @@ public class TransferService {
 
     public void makeATransferToAWallet(int clientId, TransferDTO2 transferDTO2, TypeTransfer typeTransfer) throws Exception {
 
-        Client client = clientRepository.findById(clientId).orElseThrow(()-> new IllegalArgumentException("client not found"));
+        Client client = clientService.getClientById(clientId);
 
         Wallet wallet = client.getWallet();
 
         Wallet walletReceiver = walletRepository.findByWalletNumber(transferDTO2.walletNumber());
 
         if(walletReceiver == null){
-            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
+            historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
             throw new IllegalArgumentException("This wallet account not found");
         }
 
         if(!walletReceiver.getWalletNumber().equals(wallet.getWalletNumber())){
             if(transferDTO2.amount() < 0){
-                setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
+                historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
                 throw new Exception("Invalid amount");
             }
             if(transferDTO2.amount() > wallet.getAmount()){
-                setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
+                historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
                 throw new Exception("amount is insufficient");
             }
 
@@ -108,20 +107,14 @@ public class TransferService {
             transferRepository.save(transfer);
 
 
-            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "SUCCESS", client);
+            historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "SUCCESS", client);
 
 
         }else{
-            setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
+            historyService.setHistory(""+typeTransfer, "Transfer of "+transferDTO2.amount()+ " to "+transferDTO2.walletNumber(), "FAILED", client);
             throw new Exception("This transaction is forbidden ");
         }
 
-    }
-
-    private void setHistory(String action, String description, String status, Client client){
-        History history = new History(action, description, new Date(System.currentTimeMillis()), status, client);
-
-        historyRepository.save(history);
     }
 
 }

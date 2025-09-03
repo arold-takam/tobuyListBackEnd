@@ -3,13 +3,11 @@ package com.tblGroup.toBuyList.services;
 import com.tblGroup.toBuyList.dto.DepositDTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.repositories.*;
-import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +42,7 @@ public class DepositService {
 		
 		MoneyAccount moneyAccount = moneyAccountRepository.findByPhone(depositDTO.phoneMAccount());
 		if (moneyAccount == null || moneyAccount.getAmount() < depositDTO.amount() || depositDTO.amount() <= 0.0) {
-			historyService.setHistory("Deposit of " + depositDTO.amount(), "FAILED", client);
+			historyService.setHistory("DEPOSIT","Deposit of " + depositDTO.amount(), "FAILED", client);
 			throw new IllegalArgumentException("Invalid deposit or insufficient funds.");
 		}
 		
@@ -57,9 +55,7 @@ public class DepositService {
 		
 		// 2. Logique de remboursement automatique (DOIT ÊTRE FAITE AVANT LE CRÉDIT AU WALLET)
 		Optional<Credit> lateCreditOpt = creditRepository.findAllByClient(client).stream()
-			.filter(c -> c.isActive() && c.getDateCredit().plusDays(c.getCreditOffer().getCreditDelay()).isBefore(LocalDate.now()))
-			.sorted(Comparator.comparing(Credit::getDateCredit).reversed())
-			.findFirst();
+                .filter(c -> c.isActive() && c.getDateCredit().plusDays(c.getCreditOffer().getCreditDelay()).isBefore(LocalDate.now())).max(Comparator.comparing(Credit::getDateCredit));
 		
 		if (lateCreditOpt.isPresent()) {
 			Credit credit = lateCreditOpt.get();
@@ -89,7 +85,7 @@ public class DepositService {
 				refund.setAmount(amountToTake);
 				refundRepository.save(refund);
 				
-				historyService.setHistory("Auto refund of " + amountToTake + " triggered by deposit", "SUCCESS", client);
+				historyService.setHistory("REFUND","Auto refund of " + amountToTake + " triggered by deposit", "SUCCESS", client);
 				
 				// Mettre à jour le montant final qui ira au portefeuille
 				amountForWallet -= amountToTake;
@@ -111,7 +107,7 @@ public class DepositService {
 		deposit.setTimeDeposit(LocalTime.now());
 		depositRepository.save(deposit);
 		
-		historyService.setHistory("Deposit of " + depositDTO.amount(), "SUCCESS", client);
+		historyService.setHistory("DEPOSIT","Deposit of " + depositDTO.amount(), "SUCCESS", client);
 	}
 	
 	// --- Méthodes de recherche inchangées ---
