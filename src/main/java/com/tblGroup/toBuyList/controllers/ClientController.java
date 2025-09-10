@@ -83,6 +83,9 @@ public class ClientController {
 		} catch (IllegalArgumentException e) {
 			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}catch (Exception e){
+			System.out.println(e.getMessage());
+			return ResponseEntity.badRequest().build();
 		}
 	}
 	

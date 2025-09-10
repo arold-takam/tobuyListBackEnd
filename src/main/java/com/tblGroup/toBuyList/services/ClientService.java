@@ -59,7 +59,7 @@ public class ClientService {
 		return clientRepository.findAll();
 	}
 	
-	public Client updateClient(int id, ClientDTO newClient) throws Exception {
+	public Client updateClient(int id, ClientDTO newClient){
 		Client existingClient = getExistingClient(id) ;
 		
 		existingClient.setName(newClient.name());
@@ -69,7 +69,7 @@ public class ClientService {
 		return clientRepository.save(existingClient);
 	}
 
-
+	@Transactional
 	public void deleteClient(int id){
 		Client clientToDelete = getExistingClient(id);
 
