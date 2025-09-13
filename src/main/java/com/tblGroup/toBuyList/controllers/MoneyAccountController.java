@@ -6,6 +6,7 @@ import com.tblGroup.toBuyList.dto.MoneyAccountResponseDTO;
 import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.Enum.MoneyAccountName;
 import com.tblGroup.toBuyList.models.MoneyAccount;
+import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,12 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/moneyAccount")
 public class MoneyAccountController {
 	private final MoneyAccountService moneyAccountService;
+	private final ClientService clientService;
 	
-	public MoneyAccountController(MoneyAccountService moneyAccountService) {
+	public MoneyAccountController(MoneyAccountService moneyAccountService, ClientService clientService) {
 		this.moneyAccountService = moneyAccountService;
-	}
+        this.clientService = clientService;
+    }
 	
 	
 	//	---------------------------------------------------------------------------------------------------------------------------------------
@@ -30,6 +33,8 @@ public class MoneyAccountController {
 	@PostMapping(path = "/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestParam MoneyAccountName moneyAccountName,  @RequestBody MoneyAccountDTO moneyAccount){
 		try {
+			clientService.authentification(clientID);
+
 			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccountName, moneyAccount);
 			
 			return new ResponseEntity<>(moneyAccountCreated, HttpStatus.CREATED);
@@ -42,6 +47,7 @@ public class MoneyAccountController {
 	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
 		try {
+			clientService.authentification(clientID);
 			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID);
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
@@ -53,6 +59,8 @@ public class MoneyAccountController {
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<MoneyAccountResponseDTO>>getAllAccount(@PathVariable int clientID){
+			clientService.authentification(clientID);
+
 			List<MoneyAccountResponseDTO> listMoneyAccountResponseDTO = moneyAccountService.getAllAccounts(clientID);
 			
 			return new ResponseEntity<>(listMoneyAccountResponseDTO, HttpStatus.OK);
@@ -61,6 +69,7 @@ public class MoneyAccountController {
 	@PutMapping(path = "/update/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<MoneyAccount>updateAccount(@RequestParam int clientID, @PathVariable int mAccountID, @RequestBody PasswordDTO password){
 		try {
+			clientService.authentification(clientID);
 			MoneyAccount moneyAccount = moneyAccountService.updateAccount(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
@@ -72,6 +81,7 @@ public class MoneyAccountController {
 	
 	@DeleteMapping(path = "/delete/{clientID}/{mAccountID}")
 	public ResponseEntity<Void>deleteAccount(@PathVariable int clientID, @PathVariable int mAccountID){
+		clientService.authentification(clientID);
 		boolean deleted = moneyAccountService.deleteAccount(clientID, mAccountID);
 		
 		if (deleted){

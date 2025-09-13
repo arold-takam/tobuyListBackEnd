@@ -6,6 +6,7 @@ import com.tblGroup.toBuyList.dto.TransferDTO;
 import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.Deposit;
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
+import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
@@ -24,11 +25,13 @@ public class WalletController {
     private final TransferService transferService;
     private final DepositService depositService;
     private final HistoryService historyService;
+    private final ClientService clientService;
     
-    public WalletController(TransferService transferService, DepositService depositService, HistoryService historyService) {
+    public WalletController(TransferService transferService, DepositService depositService, HistoryService historyService, ClientService clientService) {
         this.transferService = transferService;
         this.depositService = depositService;
         this.historyService = historyService;
+        this.clientService = clientService;
     }
     
     // --- TRANSFER MANAGEMENT ------------------------------------------------------------
@@ -36,6 +39,7 @@ public class WalletController {
     @PostMapping(path = "/transfer/account/{clientId}", consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> transferToAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer type) {
         return handle(() -> {
+            clientService.authentification(clientId);
             transferService.makeATransferToAnAccount(clientId, transfer, type);
             return ResponseEntity.ok().build();
         });
@@ -44,6 +48,7 @@ public class WalletController {
     @PostMapping(path = "/transfer/wallet/{clientId}", consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> transferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer type) {
         return handle(() -> {
+            clientService.authentification(clientId);
             transferService.makeATransferToAWallet(clientId, transfer, type);
             return ResponseEntity.ok().build();
         });
@@ -54,6 +59,7 @@ public class WalletController {
     @PostMapping(path = "/deposit/{clientId}", consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createDeposit(@PathVariable int clientId, @RequestBody DepositDTO depositDTO) {
         return handle(() -> {
+            clientService.authentification(clientId);
             depositService.makeDeposit(clientId, depositDTO);
             return ResponseEntity.ok().build();
         });
@@ -61,12 +67,16 @@ public class WalletController {
     
     @GetMapping(path = "/deposit/{clientId}")
     public ResponseEntity<Deposit> getDeposit(@PathVariable int clientId, @RequestParam int depositID) {
-        return handle(() -> new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK));
+        return handle(() -> {
+            clientService.authentification(clientId);
+            return new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK);
+        });
     }
     
     @GetMapping(path = "/deposit/all/{clientId}")
     public ResponseEntity<List<Deposit>> getAllDeposits(@PathVariable int clientId) {
         return handle(() -> {
+            clientService.authentification(clientId);
             List<Deposit> deposits = depositService.getAllDeposit(clientId);
             return deposits.isEmpty() ? new ResponseEntity<>(NO_CONTENT) : ResponseEntity.ok(deposits);
         });
@@ -76,12 +86,17 @@ public class WalletController {
     
     @GetMapping(path = "/history/{clientId}")
     public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientId) {
-        return handle(() -> ResponseEntity.ok(historyService.getHistory(clientId)));
+        return handle(
+                () ->{
+                    clientService.authentification(clientId);
+                    return ResponseEntity.ok(historyService.getHistory(clientId));
+                });
     }
     
     @DeleteMapping(path = "/history/{clientId}")
     public ResponseEntity<Void> deleteHistory(@PathVariable int clientId) {
         return handle(() -> {
+            clientService.authentification(clientId);
             historyService.deleteHistory(clientId);
             return ResponseEntity.noContent().build();
         });

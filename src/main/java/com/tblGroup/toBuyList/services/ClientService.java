@@ -3,13 +3,17 @@ package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.Client;
-import com.tblGroup.toBuyList.models.Transfer;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.repositories.ClientRepository;
 import com.tblGroup.toBuyList.repositories.TransferRepository;
 import com.tblGroup.toBuyList.repositories.WalletRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,14 +25,19 @@ public class ClientService {
 	private final WalletRepository walletRepository;
 	private final TransferRepository transferRepository;
 
-	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+
+
+    public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository, PasswordEncoder passwordEncoder) {
 		this.clientRepository = clientRepository;
         this.walletRepository = walletRepository;
         this.transferRepository = transferRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 	
 	
-//	------------------------------------------------------------------------------------------------------------------
+//	 /*0231------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
 	@Transactional
 	public Client createClient(ClientDTO client){
@@ -37,8 +46,9 @@ public class ClientService {
 		Client clientSaved = new Client();
 		
 		clientSaved.setName(client.name());
+		clientSaved.setUsername(client.username());
 		clientSaved.setMail(client.mail());
-		clientSaved.setPassword(client.password());
+		clientSaved.setPassword(passwordEncoder.encode(client.password()));
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
 
 		if(clientRepository.existsByMail(client.mail())){
@@ -50,9 +60,15 @@ public class ClientService {
 		
 		return clientRepository.save(clientSaved);
 	}
-	
-	public Client getClientById(int id){
-		return getExistingClient(id);
+
+	public Client getClientById(int clientID){
+		Optional<Client>optionalClient =  clientRepository.findById(clientID);
+
+		if (optionalClient.isEmpty()){
+			throw new IllegalArgumentException("Client with ID: "+clientID+" not found");
+		}
+
+		return optionalClient.get();
 	}
 	
 	public List<Client>getAllClients(){
@@ -60,7 +76,7 @@ public class ClientService {
 	}
 	
 	public Client updateClient(int id, ClientDTO newClient){
-		Client existingClient = getExistingClient(id) ;
+		Client existingClient = getClientById(id) ;
 		
 		existingClient.setName(newClient.name());
 		existingClient.setMail(newClient.mail());
@@ -71,7 +87,7 @@ public class ClientService {
 
 	@Transactional
 	public void deleteClient(int id){
-		Client clientToDelete = getExistingClient(id);
+		Client clientToDelete = getClientById(id);
 
 		transferRepository.deleteByClient_id(id);
 		clientRepository.deleteById(id);
@@ -93,19 +109,20 @@ public class ClientService {
 //	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
 
 	public Wallet getWallet(int clientID){
-		return getExistingClient(clientID).getWallet();
+		return getClientById(clientID).getWallet();
 	}
 	
 	
 //----------------------------------------UTILITY FUNCTIONS---------------------------------------------------------------------------------------------------------
-	private Client getExistingClient(int clientID){
-		Optional<Client>optionalClient =  clientRepository.findById(clientID);
-		
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+clientID+" not found");
+
+
+	public void authentification(int clientId){
+		Client client = getClientById(clientId);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(!client.getUsername().equals(authentication.getName())){
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Access not granted");
 		}
-		
-		return optionalClient.get();
+
 	}
 
 }
