@@ -80,7 +80,7 @@ public class ClientService {
 		
 		existingClient.setName(newClient.name());
 		existingClient.setMail(newClient.mail());
-		existingClient.setPassword(newClient.password());
+		existingClient.setPassword(passwordEncoder.encode(newClient.password()));
 		
 		return clientRepository.save(existingClient);
 	}
