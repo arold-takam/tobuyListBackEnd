@@ -25,9 +25,12 @@ public class TransferService {
         this.historyService = historyService;
     }
 
-    public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO, TypeTransfer typeTransfer) throws Exception{
+    public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO, TypeTransfer typeTransfer, String password) throws Exception{
 
         Client client = clientService.getClientById(clientId);
+        if(!client.getPassword().equals(password)){
+            throw new IllegalArgumentException("Wrong password");
+        }
 
         MoneyAccount receiverAccount = moneyAccountRepository.findByPhone(transferDTO.phone());
 
@@ -66,9 +69,12 @@ public class TransferService {
 
     }
 
-    public void makeATransferToAWallet(int clientId, TransferDTO2 transferDTO2, TypeTransfer typeTransfer) throws Exception {
+    public void makeATransferToAWallet(int clientId, TransferDTO2 transferDTO2, TypeTransfer typeTransfer, String password) throws Exception {
 
         Client client = clientService.getClientById(clientId);
+        if(!client.getPassword().equals(password)){
+            throw new IllegalArgumentException("Wrong password");
+        }
 
         Wallet wallet = client.getWallet();
 

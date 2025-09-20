@@ -16,7 +16,7 @@ public class HistoryService {
     private final HistoryRepository historyRepository;
     private final ClientService clientService;
 
-    public HistoryService(HistoryRepository historyRepository, ClientRepository clientRepository, ClientService clientService) {
+    public HistoryService(HistoryRepository historyRepository,ClientService clientService) {
         this.historyRepository = historyRepository;
         this.clientService = clientService;
     }

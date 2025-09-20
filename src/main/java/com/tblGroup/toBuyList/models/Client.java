@@ -16,6 +16,9 @@ public class Client {
 	
 	@Column(name = "name", nullable = false)
 	private String name;
+
+	@Column(name = "username", nullable = false, unique = true)
+	private String username;
 	
 	@Column(name = "mail", nullable = false, unique = true)
 	private String mail;
@@ -35,9 +38,10 @@ public class Client {
 	public Client() {
 	}
 	
-	public Client(String name, String mail, String password, List<MoneyAccount>moneyAccountList, Wallet wallet) {
+	public Client(String name, String username, String mail, String password, List<MoneyAccount>moneyAccountList, Wallet wallet) {
 		this.name = name;
-		this.mail = mail;
+        this.username = username;
+        this.mail = mail;
 		this.password = password;
 		this.moneyAccountList = moneyAccountList;
 		this.wallet = wallet;
@@ -92,5 +96,13 @@ public class Client {
 
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

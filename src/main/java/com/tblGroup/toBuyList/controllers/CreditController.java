@@ -5,6 +5,7 @@ import com.tblGroup.toBuyList.dto.CreditRequest1DTO;
 import com.tblGroup.toBuyList.dto.CreditRequest2DTO;
 import com.tblGroup.toBuyList.models.Credit;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
+import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.CreditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,18 +20,20 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping("/credit")
 public class CreditController {
 	private final CreditService creditService;
+	private final ClientService clientService;
 	
-	public CreditController(CreditService creditService) {
+	public CreditController(CreditService creditService, ClientService clientService) {
 		this.creditService = creditService;
-	}
+        this.clientService = clientService;
+    }
 	
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	@PostMapping(path = "create/toMoneyAccount/{clientSenderID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> makeCreditToMoneyAccount(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest1DTO creditRequest1DTO){
+	public ResponseEntity<?> makeCreditToMoneyAccount(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest1DTO creditRequest1DTO, @RequestParam String password){
 		try {
-			creditService.makeCreditToMoneyAccount(clientSenderID, creditOfferTitle, creditRequest1DTO);
+			creditService.makeCreditToMoneyAccount(clientSenderID, creditOfferTitle, creditRequest1DTO, password);
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
@@ -44,9 +47,10 @@ public class CreditController {
 	
 	
 	@PostMapping(path = "create/toWallet/{clientSenderID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> makeCreditToWallet(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest2DTO creditRequest2DTO){
+	public ResponseEntity<?> makeCreditToWallet(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest2DTO creditRequest2DTO, @RequestParam String password){
 		try {
-			creditService.makeCreditToWallet(clientSenderID, creditOfferTitle, creditRequest2DTO);
+			clientService.authentification(clientSenderID);
+			creditService.makeCreditToWallet(clientSenderID, creditOfferTitle, creditRequest2DTO, password);
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		}catch (IllegalArgumentException e) {
@@ -61,6 +65,8 @@ public class CreditController {
 	@GetMapping(path = "/get/client/{clientID}", produces = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Credit> getCreditByClientID(@PathVariable int clientID){
 		try {
+			clientService.authentification(clientID);
+
 			Credit credit = creditService.getCreditByClientID(clientID);
 			
 			return new ResponseEntity<>(credit, HttpStatus.OK);

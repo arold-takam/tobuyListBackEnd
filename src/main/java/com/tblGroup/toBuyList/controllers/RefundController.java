@@ -3,6 +3,7 @@ package com.tblGroup.toBuyList.controllers;
 import com.tblGroup.toBuyList.dto.RefundRequestByMoneyAccountDTO;
 import com.tblGroup.toBuyList.dto.RefundRequestByWalletDTO;
 import com.tblGroup.toBuyList.models.Refund;
+import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.RefundService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,12 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 public class RefundController {
 	
 	private final RefundService refundService;
+	private final ClientService clientService;
 	
-	public RefundController(RefundService refundService) {
+	public RefundController(RefundService refundService, ClientService clientService) {
 		this.refundService = refundService;
-	}
+        this.clientService = clientService;
+    }
 	
 	// --- REFUND CREATION ----------------------------------------------------------------
 	
@@ -50,6 +53,8 @@ public class RefundController {
 	
 	@GetMapping(path = "/client/{clientID}")
 	public ResponseEntity<List<Refund>> getAllRefundsByClientID(@PathVariable int clientID) {
+		clientService.authentification(clientID);
+
 		return ResponseEntity.ok(refundService.getAllRefundsByClientID(clientID));
 	}
 	
