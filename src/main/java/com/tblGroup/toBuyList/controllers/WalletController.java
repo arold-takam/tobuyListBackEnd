@@ -37,19 +37,19 @@ public class WalletController {
     // --- TRANSFER MANAGEMENT ------------------------------------------------------------
     
     @PostMapping(path = "/transfer/account/{clientId}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> transferToAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer type) {
+    public ResponseEntity<Void> transferToAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer type, @RequestParam String password) {
         return handle(() -> {
             clientService.authentification(clientId);
-            transferService.makeATransferToAnAccount(clientId, transfer, type);
+            transferService.makeATransferToAnAccount(clientId, transfer, type, password);
             return ResponseEntity.ok().build();
         });
     }
     
     @PostMapping(path = "/transfer/wallet/{clientId}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> transferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer type) {
+    public ResponseEntity<Void> transferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer type, @RequestParam String password) {
         return handle(() -> {
             clientService.authentification(clientId);
-            transferService.makeATransferToAWallet(clientId, transfer, type);
+            transferService.makeATransferToAWallet(clientId, transfer, type, password);
             return ResponseEntity.ok().build();
         });
     }

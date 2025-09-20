@@ -45,10 +45,10 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID){
+	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID, @RequestParam String password){
 		try {
 			clientService.authentification(clientID);
-			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID);
+			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -80,9 +80,9 @@ public class MoneyAccountController {
 	}
 	
 	@DeleteMapping(path = "/delete/{clientID}/{mAccountID}")
-	public ResponseEntity<Void>deleteAccount(@PathVariable int clientID, @PathVariable int mAccountID){
+	public ResponseEntity<Void>deleteAccount(@PathVariable int clientID, @PathVariable int mAccountID, @RequestParam String password){
 		clientService.authentification(clientID);
-		boolean deleted = moneyAccountService.deleteAccount(clientID, mAccountID);
+		boolean deleted = moneyAccountService.deleteAccount(clientID, mAccountID, password);
 		
 		if (deleted){
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -95,9 +95,9 @@ public class MoneyAccountController {
 	//	----------------------------------TRANSACTIONS MANAGEMENT----------------------------------------------------------
 	@PutMapping(path = "/deposit/{mAccountID}",
 		produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>makeDeposit(@RequestParam int clientID, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
+	public ResponseEntity<MoneyAccount>makeDeposit(@RequestParam int clientID, @RequestParam String password,@RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amountDTO, mAccountID);
+			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amountDTO, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -111,9 +111,9 @@ public class MoneyAccountController {
 	
 	@PutMapping(path = "/retrieve/{mAccountID}",
 		produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>makeRetrieve(@RequestParam int clientID, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
+	public ResponseEntity<MoneyAccount>makeRetrieve(@RequestParam int clientID,@RequestParam String password, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.makeRetrieve(clientID, amountDTO, mAccountID);
+			MoneyAccount moneyAccount = moneyAccountService.makeRetrieve(clientID, amountDTO, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){

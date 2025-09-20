@@ -32,10 +32,13 @@ public class CreditService {
 	}
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
-	public void makeCreditToMoneyAccount(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest1DTO creditRequest1DTO) {
+	public void makeCreditToMoneyAccount(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest1DTO creditRequest1DTO, String password) {
 		CreditOffer creditOffer = getCreditOfferFromService(creditOfferTitle);
 		
 		Client client = getAndValidateClientByID(clientSenderID);
+		if(!client.getPassword().equals(password)){
+			throw new IllegalArgumentException("Wrong password");
+		}
 		
 		validateLastCredit_client(client, creditOfferTitle);
 		
@@ -54,8 +57,11 @@ public class CreditService {
 		buildCredit(client, creditOffer, creditRequest1DTO.description());
 	}
 	
-	public void makeCreditToWallet(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest2DTO creditRequest2DTO) {
+	public void makeCreditToWallet(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest2DTO creditRequest2DTO, String password) {
 		Client client = getAndValidateClientByID(clientSenderID);
+		if(!client.getPassword().equals(password)){
+			throw new IllegalArgumentException("Wrong password");
+		}
 		
 		CreditOffer creditOffer = getCreditOfferFromService(creditOfferTitle);
 
