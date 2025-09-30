@@ -5,6 +5,7 @@ import com.tblGroup.toBuyList.dto.TransferDTO2;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
 import com.tblGroup.toBuyList.repositories.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -16,19 +17,24 @@ public class TransferService {
     private final MoneyAccountRepository moneyAccountRepository;
     private final WalletRepository walletRepository;
     private final HistoryService historyService;
-
-    public TransferService(TransferRepository transferRepository, ClientService clientService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService) {
+    private final PasswordEncoder passwordEncoder;
+    
+    public TransferService(TransferRepository transferRepository, ClientService clientService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, PasswordEncoder passwordEncoder) {
         this.transferRepository = transferRepository;
         this.clientService = clientService;
         this.moneyAccountRepository = moneyAccountRepository;
         this.walletRepository = walletRepository;
         this.historyService = historyService;
+        this.passwordEncoder = passwordEncoder;
     }
+    
+//    -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     public void makeATransferToAnAccount(int clientId, TransferDTO transferDTO, TypeTransfer typeTransfer, String password) throws Exception{
 
         Client client = clientService.getClientById(clientId);
-        if(!client.getPassword().equals(password)){
+        boolean isValid = passwordEncoder.matches(password, client.getPassword());
+        if(!isValid){
             throw new IllegalArgumentException("Wrong password");
         }
 
@@ -72,7 +78,9 @@ public class TransferService {
     public void makeATransferToAWallet(int clientId, TransferDTO2 transferDTO2, TypeTransfer typeTransfer, String password) throws Exception {
 
         Client client = clientService.getClientById(clientId);
-        if(!client.getPassword().equals(password)){
+        
+        boolean isValid = passwordEncoder.matches(password, client.getPassword());
+        if(!isValid){
             throw new IllegalArgumentException("Wrong password");
         }
 

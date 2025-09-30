@@ -33,11 +33,16 @@ public class RefundService {
 	
 	// --- REFUND MANAGEMENT ---
 	@Transactional
-	public void makeRefundByWallet(int creditID, RefundRequestByWalletDTO request) {
+	public void makeRefundByWallet(int creditID, int clientId,  RefundRequestByWalletDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
 		
+		
 		Client client = credit.getClient();
+		
+		if(client.getId() != clientId){
+			throw new IllegalArgumentException("This client is not the owner of this credit");
+		}
 
 		CreditOffer creditOffer = credit.getCreditOffer();
 		
@@ -84,12 +89,15 @@ public class RefundService {
 	}
 	
 	@Transactional
-	public void makeRefundByMoneyAccount(int creditID, RefundRequestByMoneyAccountDTO request) {
+	public void makeRefundByMoneyAccount(int creditID, int clientId, RefundRequestByMoneyAccountDTO request) {
 		Credit credit = creditRepository.findById(creditID)
 			.orElseThrow(() -> new IllegalArgumentException("This credit does not exist"));
 
 		Client client = credit.getClient();
-
+		
+		if(client.getId() != clientId){
+			throw new IllegalArgumentException("This client is not the owner of this credit");
+		}
 		CreditOffer creditOffer = credit.getCreditOffer();
 
 		int difference =getDifferenceAmount(creditOffer, credit);
@@ -102,6 +110,7 @@ public class RefundService {
 		
 		if(!credit.isActive()){
 			historyService.setHistory("REFUND","Refunding the " + creditOffer.getTitleCreditOffer() + " credit", "FAILED", client);
+			System.out.println("failed");
 			throw new IllegalArgumentException("This credit is already refund.");
 		}
 
@@ -122,7 +131,7 @@ public class RefundService {
 		Refund refund = new Refund();
 		refund.setDescription(request.description());
 		refund.setCredit(credit);
-		refund.setMoneyAccountNumber(" ");
+		refund.setMoneyAccountNumber(request.moneyAccountNumber());
 		refund.setDateRefund(LocalDate.now());
 		refund.setTimeRefund(LocalTime.now());
 		refund.setAmount(request.amount());

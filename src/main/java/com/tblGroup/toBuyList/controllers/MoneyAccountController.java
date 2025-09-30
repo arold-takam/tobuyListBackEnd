@@ -95,9 +95,9 @@ public class MoneyAccountController {
 	//	----------------------------------TRANSACTIONS MANAGEMENT----------------------------------------------------------
 	@PutMapping(path = "/deposit/{mAccountID}",
 		produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<MoneyAccount>makeDeposit(@RequestParam int clientID, @RequestParam String password,@RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
+	public ResponseEntity<MoneyAccount>makeDeposit(@RequestParam int clientID, @RequestBody AmountDTO amountDTO, @PathVariable int mAccountID){
 		try {
-			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amountDTO, mAccountID, password);
+			MoneyAccount moneyAccount = moneyAccountService.makeDeposit(clientID, amountDTO, mAccountID);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){

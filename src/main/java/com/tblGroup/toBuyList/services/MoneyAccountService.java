@@ -84,7 +84,7 @@ public class MoneyAccountService {
 		
 		MoneyAccount moneyAccountFound = getMoneyAccountByClient(clientID, mAccountID, passwordDTO.oldPassword());
 	
-		moneyAccountFound.setPassword(passwordDTO.newPassword());
+		moneyAccountFound.setPassword(passwordEncoder.encode(passwordDTO.newPassword()));
 		
 		moneyAccountRepository.save(moneyAccountFound);
 		
@@ -104,10 +104,14 @@ public class MoneyAccountService {
 	
 //	----------------------------------TRANSACTIONS MANAGEMENT----------------------------------------------------------
 	
-	public MoneyAccount makeDeposit(int clientID, AmountDTO amountDTO, int mAccountID, String password) throws Exception {
+	public MoneyAccount makeDeposit(int clientID, AmountDTO amountDTO, int mAccountID) throws Exception {
 		 getClientByID(clientID);
-
+		
 		MoneyAccount moneyAccount = moneyAccountRepository.findByClient_IdAndId(clientID, mAccountID);
+		
+		if (moneyAccount == null){
+			throw new IllegalArgumentException("Money account with ID: " + mAccountID + " not found for client ID: " + clientID + ".");
+		}
 
 		if (moneyAccount == null){
 			throw new IllegalArgumentException("Money account with ID: " + mAccountID + " not found for client ID: " + clientID + ".");
@@ -156,7 +160,10 @@ public class MoneyAccountService {
 		if (moneyAccount == null){
 			throw new IllegalArgumentException("Money account with ID: " + mAccountID + " not found for client ID: " + clientID + ".");
 		}
-		if(!moneyAccount.getPassword().equals(password)){
+		
+		boolean isValid = passwordEncoder.matches(password, moneyAccount.getPassword());
+		
+		if(!isValid){
 			throw new IllegalArgumentException("Wrong password");
 		}
 		

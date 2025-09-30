@@ -29,17 +29,17 @@ public class RefundController {
 	// --- REFUND CREATION ----------------------------------------------------------------
 	
 	@PostMapping(path = "/wallet/{creditID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> makeRefundByWallet(@PathVariable int creditID, @RequestBody RefundRequestByWalletDTO request) {
+	public ResponseEntity<Void> makeRefundByWallet(@PathVariable int creditID,  @RequestParam int clientId, @RequestBody RefundRequestByWalletDTO request) {
 		return handle(() -> {
-			refundService.makeRefundByWallet(creditID, request);
+			refundService.makeRefundByWallet(creditID, clientId,  request);
 			return new ResponseEntity<>(CREATED);
 		});
 	}
 	
 	@PostMapping(path = "/moneyAccount/{creditID}", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> makeRefundByMoneyAccount(@PathVariable int creditID, @RequestBody RefundRequestByMoneyAccountDTO request) {
+	public ResponseEntity<Void> makeRefundByMoneyAccount(@PathVariable int creditID, @RequestParam  int clientId, @RequestBody RefundRequestByMoneyAccountDTO request) {
 		return handle(() -> {
-			refundService.makeRefundByMoneyAccount(creditID, request);
+			refundService.makeRefundByMoneyAccount(creditID, clientId, request);
 			return new ResponseEntity<>(CREATED);
 		});
 	}

@@ -2,11 +2,8 @@ package com.tblGroup.toBuyList.services;
 
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
-import com.tblGroup.toBuyList.models.Client;
-import com.tblGroup.toBuyList.models.Wallet;
-import com.tblGroup.toBuyList.repositories.ClientRepository;
-import com.tblGroup.toBuyList.repositories.TransferRepository;
-import com.tblGroup.toBuyList.repositories.WalletRepository;
+import com.tblGroup.toBuyList.models.*;
+import com.tblGroup.toBuyList.repositories.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,15 +23,24 @@ public class ClientService {
 	private final TransferRepository transferRepository;
 
     private final PasswordEncoder passwordEncoder;
-
-
-
-    public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository, PasswordEncoder passwordEncoder) {
+	private final CreditRepository creditRepository;
+	private final DepositRepository depositRepository;
+	private final HistoryRepository historyRepository;
+	private final MoneyAccountRepository moneyAccountRepository;
+	private final RefundRepository refundRepository;
+	
+	
+	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository, PasswordEncoder passwordEncoder, CreditRepository creditRepository, DepositRepository depositRepository, HistoryRepository historyRepository, MoneyAccountRepository moneyAccountRepository, RefundRepository refundRepository) {
 		this.clientRepository = clientRepository;
         this.walletRepository = walletRepository;
         this.transferRepository = transferRepository;
         this.passwordEncoder = passwordEncoder;
-    }
+		this.creditRepository = creditRepository;
+		this.depositRepository = depositRepository;
+		this.historyRepository = historyRepository;
+		this.moneyAccountRepository = moneyAccountRepository;
+		this.refundRepository = refundRepository;
+	}
 	
 	
 //	 /*0231------------------------------------------------------------------------------------------------------------------
@@ -79,15 +85,34 @@ public class ClientService {
 		Client existingClient = getClientById(id) ;
 		
 		existingClient.setName(newClient.name());
+		existingClient.setUsername(newClient.username());
 		existingClient.setMail(newClient.mail());
-		existingClient.setPassword(newClient.password());
+		existingClient.setPassword(passwordEncoder.encode(newClient.password()));
 		
 		return clientRepository.save(existingClient);
 	}
 
 	@Transactional
 	public void deleteClient(int id){
+		if (!clientRepository.existsById(id)){
+			throw new IllegalArgumentException("Client with ID: "+id+" not found");
+		}
+		
 		Client clientToDelete = getClientById(id);
+		
+		List<Credit>creditList = creditRepository.findAllByClient(clientToDelete);
+		List<Deposit>depositList = depositRepository.findAllByClientId(clientToDelete.getId());
+		List<History>historyList = historyRepository.findAllByClient(clientToDelete);
+		List<MoneyAccount>moneyAccountList = moneyAccountRepository.findAllByClientId(clientToDelete.getId());
+		List<Refund>refundList = refundRepository.findAllByCredit_Client(clientToDelete);
+		List<Transfer>transferList = transferRepository.findAllByClient(clientToDelete);
+		
+		creditRepository.deleteAll(creditList);
+		depositRepository.deleteAll(depositList);
+		historyRepository.deleteAll(historyList);
+		moneyAccountRepository.deleteAll(moneyAccountList);
+		refundRepository.deleteAll(refundList);
+		transferRepository.deleteAll(transferList);
 
 		transferRepository.deleteByClient_id(id);
 		clientRepository.deleteById(id);

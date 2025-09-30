@@ -5,8 +5,8 @@ import com.tblGroup.toBuyList.dto.CreditRequest2DTO;
 import com.tblGroup.toBuyList.models.*;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.repositories.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -17,18 +17,19 @@ public class CreditService {
 	private final CreditRepository creditRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final WalletRepository walletRepository;
-
 	private final CreditOfferService creditOfferService;
 	private final HistoryService historyService;
 	private final ClientRepository clientRepository;
+	private final PasswordEncoder passwordEncoder;
 	
-	public CreditService(CreditRepository creditRepository, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, ClientRepository clientRepository) {
+	public CreditService(CreditRepository creditRepository, CreditOfferService creditOfferService, MoneyAccountRepository moneyAccountRepository, WalletRepository walletRepository, HistoryService historyService, ClientRepository clientRepository, PasswordEncoder passwordEncoder) {
 		this.creditRepository = creditRepository;
 		this.creditOfferService = creditOfferService;
 	        this.moneyAccountRepository = moneyAccountRepository;
 	        this.walletRepository = walletRepository;
 	        this.historyService = historyService;
 		this.clientRepository = clientRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +37,8 @@ public class CreditService {
 		CreditOffer creditOffer = getCreditOfferFromService(creditOfferTitle);
 		
 		Client client = getAndValidateClientByID(clientSenderID);
-		if(!client.getPassword().equals(password)){
+		if(!passwordEncoder.matches(password, client.getPassword())){
+			System.out.println(password+ " ,  "+client.getPassword());
 			throw new IllegalArgumentException("Wrong password");
 		}
 		
@@ -59,7 +61,8 @@ public class CreditService {
 	
 	public void makeCreditToWallet(int clientSenderID, TitleCreditOffer creditOfferTitle, CreditRequest2DTO creditRequest2DTO, String password) {
 		Client client = getAndValidateClientByID(clientSenderID);
-		if(!client.getPassword().equals(password)){
+		if(!passwordEncoder.matches(password, client.getPassword())){
+			System.out.println(password+ " ,  "+client.getPassword());
 			throw new IllegalArgumentException("Wrong password");
 		}
 		

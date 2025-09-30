@@ -25,6 +25,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http
+//                TODO: Choisir quoi garder ici
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                     auth.requestMatchers(
@@ -34,8 +35,8 @@ public class SecurityConfig {
                                     "/swagger-ui.html",
                                     "/v3/api-docs/**",
                                     "/webjars/**",
-                                    "/swagger-resources/**"
-
+                                    "/swagger-resources/**",
+                                "/moneyAccount/deposit/**"
                             ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -6,7 +6,6 @@ import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.repositories.CreditOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -45,8 +44,7 @@ public class CreditOfferService {
 	}
 	
 	public List<CreditOffer> getAllCreditOffers() {
-
-        return creditOfferRepository.findAll();
+                return creditOfferRepository.findAll();
 	}
 	
 	public void updateCreditOffer(int creditOfferID, TitleCreditOffer newTitleCreditOffer, CreditOfferRequestDTO creditOfferRequestDTO) {
