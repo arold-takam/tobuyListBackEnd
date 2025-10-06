@@ -4,7 +4,6 @@ import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.Refund;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
 import java.util.List;
 

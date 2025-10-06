@@ -3,7 +3,6 @@ package com.tblGroup.toBuyList.services;
 import com.tblGroup.toBuyList.dto.HistoryResponse;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.History;
-import com.tblGroup.toBuyList.repositories.ClientRepository;
 import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
 

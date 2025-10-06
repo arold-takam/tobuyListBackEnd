@@ -11,9 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -21,13 +19,12 @@ public class ClientService {
 	private final ClientRepository clientRepository;
 	private final WalletRepository walletRepository;
 	private final TransferRepository transferRepository;
-
-    private final PasswordEncoder passwordEncoder;
 	private final CreditRepository creditRepository;
 	private final DepositRepository depositRepository;
 	private final HistoryRepository historyRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final RefundRepository refundRepository;
+    private final PasswordEncoder passwordEncoder;
 	
 	
 	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository, PasswordEncoder passwordEncoder, CreditRepository creditRepository, DepositRepository depositRepository, HistoryRepository historyRepository, MoneyAccountRepository moneyAccountRepository, RefundRepository refundRepository) {
@@ -68,13 +65,9 @@ public class ClientService {
 	}
 
 	public Client getClientById(int clientID){
-		Optional<Client>optionalClient =  clientRepository.findById(clientID);
-
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+clientID+" not found");
-		}
-
-		return optionalClient.get();
+		
+		return clientRepository.findById(clientID)
+			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 	}
 	
 	public List<Client>getAllClients(){
@@ -107,6 +100,7 @@ public class ClientService {
 		List<Refund>refundList = refundRepository.findAllByCredit_Client(clientToDelete);
 		List<Transfer>transferList = transferRepository.findAllByClient(clientToDelete);
 		
+//---------------IN THE V2 WE WILL IMPROVE THIS PROCESS OF DELETION-----------------------------
 		creditRepository.deleteAll(creditList);
 		depositRepository.deleteAll(depositList);
 		historyRepository.deleteAll(historyList);
@@ -145,7 +139,7 @@ public class ClientService {
 		Client client = getClientById(clientId);
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if(!client.getUsername().equals(authentication.getName())){
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Access not granted");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Access not granted.");
 		}
 
 	}

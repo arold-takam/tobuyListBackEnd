@@ -1,7 +1,6 @@
 package com.tblGroup.toBuyList.models;
 
 import jakarta.persistence.*;
-
 import java.util.Date;
 
 @Entity
