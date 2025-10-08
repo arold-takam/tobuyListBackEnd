@@ -2,7 +2,6 @@ package com.tblGroup.toBuyList.models;
 
 import com.tblGroup.toBuyList.models.Enum.TypeTransfer;
 import jakarta.persistence.*;
-
 import java.util.Date;
 
 @Entity

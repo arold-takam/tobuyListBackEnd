@@ -28,8 +28,8 @@ public class ClientService {
 	private final HistoryRepository historyRepository;
 	private final MoneyAccountRepository moneyAccountRepository;
 	private final RefundRepository refundRepository;
-
-
+	
+	
 	public ClientService(ClientRepository clientRepository, WalletRepository walletRepository, TransferRepository transferRepository, PasswordEncoder passwordEncoder, CreditRepository creditRepository, DepositRepository depositRepository, HistoryRepository historyRepository, MoneyAccountRepository moneyAccountRepository, RefundRepository refundRepository) {
 		this.clientRepository = clientRepository;
         this.walletRepository = walletRepository;
@@ -41,16 +41,16 @@ public class ClientService {
 		this.moneyAccountRepository = moneyAccountRepository;
 		this.refundRepository = refundRepository;
 	}
-
-
+	
+	
 //	 /*0231------------------------------------------------------------------------------------------------------------------
 //	---------------------------------CLIENT MANAGEMENT----------------------------------------------
 	@Transactional
 	public Client createClient(ClientDTO client){
 		Wallet wallet = new Wallet();
-
+		
 		Client clientSaved = new Client();
-
+		
 		clientSaved.setName(client.name());
 		clientSaved.setUsername(client.username());
 		clientSaved.setMail(client.mail());
@@ -63,32 +63,28 @@ public class ClientService {
 
 		walletRepository.save(wallet);
 		clientSaved.setWallet(wallet);
-
+		
 		return clientRepository.save(clientSaved);
 	}
 
 	public Client getClientById(int clientID){
-		Optional<Client>optionalClient =  clientRepository.findById(clientID);
 
-		if (optionalClient.isEmpty()){
-			throw new IllegalArgumentException("Client with ID: "+clientID+" not found");
-		}
-
-		return optionalClient.get();
+		return clientRepository.findById(clientID)
+			.orElseThrow(() -> new IllegalArgumentException("No client found at the ID: " + clientID));
 	}
-
+	
 	public List<Client>getAllClients(){
 		return clientRepository.findAll();
 	}
-
+	
 	public Client updateClient(int id, ClientDTO newClient){
 		Client existingClient = getClientById(id) ;
-
+		
 		existingClient.setName(newClient.name());
 		existingClient.setUsername(newClient.username());
 		existingClient.setMail(newClient.mail());
 		existingClient.setPassword(passwordEncoder.encode(newClient.password()));
-
+		
 		return clientRepository.save(existingClient);
 	}
 
@@ -97,9 +93,9 @@ public class ClientService {
 		if (!clientRepository.existsById(id)){
 			throw new IllegalArgumentException("Client with ID: "+id+" not found");
 		}
-
+		
 		Client clientToDelete = getClientById(id);
-
+		
 		List<Credit>creditList = creditRepository.findAllByClient(clientToDelete);
 		List<Deposit>depositList = depositRepository.findAllByClientId(clientToDelete.getId());
 		List<History>historyList = historyRepository.findAllByClient(clientToDelete);
@@ -107,6 +103,7 @@ public class ClientService {
 		List<Refund>refundList = refundRepository.findAllByCredit_Client(clientToDelete);
 		List<Transfer>transferList = transferRepository.findAllByClient(clientToDelete);
 
+//---------------IN THE V2 WE WILL IMPROVE THIS PROCESS OF DELETION-----------------------------
 		creditRepository.deleteAll(creditList);
 		depositRepository.deleteAll(depositList);
 		historyRepository.deleteAll(historyList);
@@ -119,7 +116,7 @@ public class ClientService {
 		walletRepository.deleteById(clientToDelete.getWallet().getId());
 
 	}
-
+	
 //	------------------------------------------------------------------------------------------------------------------
 
 	private String autoGenerateAWalletNumber(){
@@ -136,8 +133,8 @@ public class ClientService {
 	public Wallet getWallet(int clientID){
 		return getClientById(clientID).getWallet();
 	}
-
-
+	
+	
 //----------------------------------------UTILITY FUNCTIONS---------------------------------------------------------------------------------------------------------
 
     public boolean authentification(int clientId) {
@@ -149,5 +146,6 @@ public class ClientService {
         return client.getUsername().equals(auth.getName());
     }
 
+	}
 
-}
+

@@ -4,7 +4,6 @@ import com.tblGroup.toBuyList.models.CreditOffer;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
 

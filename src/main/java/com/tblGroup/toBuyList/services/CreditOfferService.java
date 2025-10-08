@@ -7,7 +7,6 @@ import com.tblGroup.toBuyList.repositories.CreditOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CreditOfferService {
@@ -34,13 +33,7 @@ public class CreditOfferService {
 	}
 	
 	public CreditOffer getCreditOfferByTitle(TitleCreditOffer titleCreditOffer) {
-		CreditOffer creditOffer = creditOfferRepository.findByTitleCreditOffer(titleCreditOffer);
-		
-		if (creditOffer == null) {
-			throw new IllegalArgumentException("Credit offer with title " + titleCreditOffer + " not found.");
-		}
-		
-		return creditOffer;
+		return validateCreditOfferByTitle(titleCreditOffer);
 	}
 	
 	public List<CreditOffer> getAllCreditOffers() {
@@ -48,13 +41,7 @@ public class CreditOfferService {
 	}
 	
 	public void updateCreditOffer(int creditOfferID, TitleCreditOffer newTitleCreditOffer, CreditOfferRequestDTO creditOfferRequestDTO) {
-		Optional<CreditOffer> creditOfferOptional = creditOfferRepository.findById(creditOfferID);
-		
-		if (creditOfferOptional.isEmpty()) {
-			throw new IllegalArgumentException("Credit offer with id " + creditOfferID + " not found.");
-		}
-		
-		CreditOffer creditOffer = creditOfferOptional.get();
+		CreditOffer creditOffer = creditOfferRepository.findById(creditOfferID).orElseThrow(()-> new IllegalArgumentException("Credit offer with id " + creditOfferID + " not found."));
 		
 		creditOffer.setTitleCreditOffer(newTitleCreditOffer);
 		creditOffer.setLimitationCreditAmount(creditOfferRequestDTO.limitationCreditAmount());
@@ -66,15 +53,19 @@ public class CreditOfferService {
 
 	@Transactional
 	public boolean deleteCreditOffer(TitleCreditOffer titleCreditOffer) {
+		creditOfferRepository.delete(validateCreditOfferByTitle(titleCreditOffer));
+		
+		return true;
+	}
+	
+//	----------UTILITIES METHOD---------------------------------------------------------------------
+	private CreditOffer validateCreditOfferByTitle(TitleCreditOffer titleCreditOffer){
 		CreditOffer creditOffer = creditOfferRepository.findByTitleCreditOffer(titleCreditOffer);
 		
 		if (creditOffer == null) {
 			throw new IllegalArgumentException("Credit offer with title " + titleCreditOffer + " not found.");
 		}
 		
-		creditOfferRepository.delete(creditOffer);
-		
-		return true;
+		return creditOffer;
 	}
-	
 }

@@ -2,8 +2,6 @@ package com.tblGroup.toBuyList.models;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 
