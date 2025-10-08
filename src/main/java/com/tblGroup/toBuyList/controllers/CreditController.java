@@ -9,6 +9,7 @@ import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.CreditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -47,9 +48,10 @@ public class CreditController {
 	
 	
 	@PostMapping(path = "create/toWallet/{clientSenderID}", consumes = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientSenderID)")
 	public ResponseEntity<?> makeCreditToWallet(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest2DTO creditRequest2DTO, @RequestParam String password){
 		try {
-			clientService.authentification(clientSenderID);
+
 			creditService.makeCreditToWallet(clientSenderID, creditOfferTitle, creditRequest2DTO, password);
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
@@ -63,6 +65,7 @@ public class CreditController {
 //	GETTING MANAGEMENT----------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	@GetMapping(path = "/get/client/{clientID}", produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Credit> getCreditByClientID(@PathVariable int clientID){
 		try {
 			clientService.authentification(clientID);

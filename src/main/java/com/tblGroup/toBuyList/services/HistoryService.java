@@ -3,9 +3,10 @@ package com.tblGroup.toBuyList.services;
 import com.tblGroup.toBuyList.dto.HistoryResponse;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.History;
-import com.tblGroup.toBuyList.repositories.ClientRepository;
 import com.tblGroup.toBuyList.repositories.HistoryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,6 +49,8 @@ public class HistoryService {
         historyRepository.deleteAllByClient(client);
     }
 
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setHistory(String action, String description, String status, Client client){
         History history = new History(action, description, new Date(System.currentTimeMillis()), status, client);
 

@@ -11,6 +11,7 @@ import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,9 +47,9 @@ public class WalletController {
     }
     
     @PostMapping(path = "/transfer/wallet/{clientId}", consumes = APPLICATION_JSON_VALUE)
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<Void> transferToWallet(@PathVariable int clientId, @RequestBody TransferDTO2 transfer, @RequestParam TypeTransfer type, @RequestParam String password) {
         return handle(() -> {
-            clientService.authentification(clientId);
             transferService.makeATransferToAWallet(clientId, transfer, type, password);
             return ResponseEntity.ok().build();
         });
@@ -57,26 +58,26 @@ public class WalletController {
     // --- DEPOSIT MANAGEMENT -------------------------------------------------------------
     
     @PostMapping(path = "/deposit/{clientId}", consumes = APPLICATION_JSON_VALUE)
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<Void> createDeposit(@PathVariable int clientId, @RequestBody DepositDTO depositDTO) {
         return handle(() -> {
-            clientService.authentification(clientId);
             depositService.makeDeposit(clientId, depositDTO);
             return ResponseEntity.ok().build();
         });
     }
     
     @GetMapping(path = "/deposit/{clientId}")
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<Deposit> getDeposit(@PathVariable int clientId, @RequestParam int depositID) {
         return handle(() -> {
-            clientService.authentification(clientId);
             return new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK);
         });
     }
     
     @GetMapping(path = "/deposit/all/{clientId}")
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<List<Deposit>> getAllDeposits(@PathVariable int clientId) {
         return handle(() -> {
-            clientService.authentification(clientId);
             List<Deposit> deposits = depositService.getAllDeposit(clientId);
             return deposits.isEmpty() ? new ResponseEntity<>(NO_CONTENT) : ResponseEntity.ok(deposits);
         });
@@ -85,18 +86,18 @@ public class WalletController {
     // --- HISTORY MANAGEMENT -------------------------------------------------------------
     
     @GetMapping(path = "/history/{clientId}")
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientId) {
         return handle(
                 () ->{
-                    clientService.authentification(clientId);
                     return ResponseEntity.ok(historyService.getHistory(clientId));
                 });
     }
     
     @DeleteMapping(path = "/history/{clientId}")
+    @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<Void> deleteHistory(@PathVariable int clientId) {
         return handle(() -> {
-            clientService.authentification(clientId);
             historyService.deleteHistory(clientId);
             return ResponseEntity.noContent().build();
         });

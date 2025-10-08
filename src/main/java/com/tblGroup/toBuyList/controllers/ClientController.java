@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,9 +43,9 @@ public class ClientController {
 	}
 	
 	@GetMapping(path = "/get/{clientID}", produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Client>getClient(@PathVariable int clientID){
 		try {
-			clientService.authentification(clientID);
 			Client foundClient = clientService.getClientById(clientID);
 			return new ResponseEntity<>(foundClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -61,9 +62,9 @@ public class ClientController {
 	}
 	
 	@PutMapping(path = "/update/{clientID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Client>updateClient(@PathVariable int clientID, @RequestBody ClientDTO newClient){
 		try {
-			clientService.authentification(clientID);
 			Client updatedClient = clientService.updateClient(clientID, newClient);
 			return  new ResponseEntity<>(updatedClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
@@ -76,9 +77,10 @@ public class ClientController {
 	}
 	
 	@DeleteMapping(path = "/delete/{clientID}")
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Void>deleteClient(@PathVariable int clientID){
 		try {
-			clientService.authentification(clientID);
+
 			clientService.deleteClient(clientID);
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 			
@@ -94,9 +96,9 @@ public class ClientController {
 	//	----------------------------------------------WALLET MANAGEMENT-------------------------------------------------------------------------------------------------
 
 	@GetMapping(path = "/get/wallet/{clientID}", produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Wallet>getWallet(@PathVariable int clientID){
 		try {
-			clientService.authentification(clientID);
 
 			Wallet wallet = clientService.getWallet(clientID);
 

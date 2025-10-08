@@ -10,6 +10,7 @@ import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,9 +32,10 @@ public class MoneyAccountController {
 	//	---------------------------------------------------------------------------------------------------------------------------------------
 //	---------------------moneyAccountManagement------------------------------------------------
 	@PostMapping(path = "/create/{clientID}", consumes = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestParam MoneyAccountName moneyAccountName,  @RequestBody MoneyAccountDTO moneyAccount){
 		try {
-			clientService.authentification(clientID);
+			//clientService.authentification(clientID);
 
 			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccountName, moneyAccount);
 			
@@ -45,9 +47,10 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{mAccountID}/{clientID}", produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID, @RequestParam String password){
 		try {
-			clientService.authentification(clientID);
+			//clientService.authentification(clientID);
 			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
@@ -58,8 +61,8 @@ public class MoneyAccountController {
 	}
 	
 	@GetMapping(path = "/read/{clientID}", produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<List<MoneyAccountResponseDTO>>getAllAccount(@PathVariable int clientID){
-			clientService.authentification(clientID);
 
 			List<MoneyAccountResponseDTO> listMoneyAccountResponseDTO = moneyAccountService.getAllAccounts(clientID);
 			
@@ -67,9 +70,10 @@ public class MoneyAccountController {
 	}
 	
 	@PutMapping(path = "/update/{mAccountID}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<MoneyAccount>updateAccount(@RequestParam int clientID, @PathVariable int mAccountID, @RequestBody PasswordDTO password){
 		try {
-			clientService.authentification(clientID);
+
 			MoneyAccount moneyAccount = moneyAccountService.updateAccount(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
@@ -80,8 +84,9 @@ public class MoneyAccountController {
 	}
 	
 	@DeleteMapping(path = "/delete/{clientID}/{mAccountID}")
+	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<Void>deleteAccount(@PathVariable int clientID, @PathVariable int mAccountID, @RequestParam String password){
-		clientService.authentification(clientID);
+
 		boolean deleted = moneyAccountService.deleteAccount(clientID, mAccountID, password);
 		
 		if (deleted){
