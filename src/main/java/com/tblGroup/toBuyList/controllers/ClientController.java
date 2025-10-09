@@ -9,6 +9,8 @@ import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.services.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,12 +57,19 @@ public class ClientController {
 	}
 	
 	@PostMapping(path = "/login", consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
+	public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequestDTO loginRequestDTO, HttpServletRequest request) {
 		try {
-			 authenticationManager.authenticate(
+			Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequestDTO.userName(), loginRequestDTO.password()));
-			
+
+			HttpSession session = request.getSession(true);
+			session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+					new SecurityContextImpl(authentication));
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+
 			return ResponseEntity.ok("Login successful !");
+		}catch (AuthenticationException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
 		}catch (Exception e){
 //			log.error(e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error; try again.");
