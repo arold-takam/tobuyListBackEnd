@@ -1,6 +1,7 @@
 package com.tblGroup.toBuyList.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.tblGroup.toBuyList.models.Enum.Role;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -26,10 +27,15 @@ public class Client {
 	@Column(name = "password", nullable = false)
 	private String password;
 	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "role", nullable = false)
+	private Role roleName;
+	
 	@OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private List<MoneyAccount>moneyAccountList = new ArrayList<>();
-
+	
+	
 	@OneToOne()
 	@JoinColumn(name = "wallet")
 	private Wallet wallet;
@@ -38,11 +44,12 @@ public class Client {
 	public Client() {
 	}
 	
-	public Client(String name, String username, String mail, String password, List<MoneyAccount>moneyAccountList, Wallet wallet) {
+	public Client(String name, String username, String mail, String password, Role roleName, List<MoneyAccount>moneyAccountList, Wallet wallet) {
 		this.name = name;
         this.username = username;
         this.mail = mail;
 		this.password = password;
+		this.roleName = roleName;
 		this.moneyAccountList = moneyAccountList;
 		this.wallet = wallet;
     }
@@ -105,4 +112,12 @@ public class Client {
     public void setUsername(String username) {
         this.username = username;
     }
+	
+	public Role getRoleName() {
+		return roleName;
+	}
+	
+	public void setRoleName(Role roleName) {
+		this.roleName = roleName;
+	}
 }

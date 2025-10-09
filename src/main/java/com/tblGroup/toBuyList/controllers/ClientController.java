@@ -2,16 +2,21 @@ package com.tblGroup.toBuyList.controllers;
 
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
+import com.tblGroup.toBuyList.dto.LoginRequestDTO;
 import com.tblGroup.toBuyList.models.Client;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.services.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +28,11 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 public class ClientController {
 	private final ClientService clientService;
 	
-	public ClientController(ClientService clientService) {
+	private final AuthenticationManager authenticationManager;
+	
+	public ClientController(ClientService clientService, AuthenticationManager authenticationManager) {
 		this.clientService = clientService;
+		this.authenticationManager = authenticationManager;
 	}
 	
 //	------------------------------------------------------------------------------------------
@@ -39,6 +47,19 @@ public class ClientController {
 		}catch (IllegalArgumentException e){
 			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	@PostMapping(path = "/login", consumes = APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
+		try {
+			 authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequestDTO.userName(), loginRequestDTO.password()));
+			
+			return ResponseEntity.ok("Login successful !");
+		}catch (Exception e){
+//			log.error(e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error; try again.");
 		}
 	}
 	

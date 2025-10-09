@@ -3,6 +3,7 @@ package com.tblGroup.toBuyList.services;
 
 import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.models.*;
+import com.tblGroup.toBuyList.models.Enum.Role;
 import com.tblGroup.toBuyList.repositories.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -55,6 +56,7 @@ public class ClientService {
 		clientSaved.setUsername(client.username());
 		clientSaved.setMail(client.mail());
 		clientSaved.setPassword(passwordEncoder.encode(client.password()));
+		clientSaved.setRoleName(Role.CLIENT);
 		wallet.setWalletNumber(autoGenerateAWalletNumber());
 
 		if(clientRepository.existsByMail(client.mail())){

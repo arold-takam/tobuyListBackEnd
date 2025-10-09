@@ -26,7 +26,7 @@ public class MyUserDetailsService implements UserDetailsService {
             return User
                     .withUsername(client.getUsername())
                     .password(client.getPassword())
-                    .authorities(new SimpleGrantedAuthority("ROLE_USER"))
+                    .authorities(new SimpleGrantedAuthority(client.getRoleName().name()))
                     .build();
     }
 }
