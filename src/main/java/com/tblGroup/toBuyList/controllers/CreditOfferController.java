@@ -4,18 +4,20 @@ import com.tblGroup.toBuyList.dto.CreditOfferRequestDTO;
 import com.tblGroup.toBuyList.models.CreditOffer;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.services.CreditOfferService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/creditOffer")
 public class CreditOfferController {
 	private final CreditOfferService creditOfferService;
+	
+	private static final Logger log = LoggerFactory.getLogger(CreditOfferController.class);
 	
 	public CreditOfferController(CreditOfferService creditOfferService) {
 		this.creditOfferService = creditOfferService;
@@ -30,10 +32,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -45,10 +47,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(creditOffer, HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -60,10 +62,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(creditOfferList, HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -75,10 +77,10 @@ public class CreditOfferController {
 			
 			return new ResponseEntity<>(HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -94,10 +96,10 @@ public class CreditOfferController {
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}
 		}catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new IllegalArgumentException(e.getMessage());
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

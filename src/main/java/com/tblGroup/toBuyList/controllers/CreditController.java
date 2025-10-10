@@ -1,25 +1,25 @@
 package com.tblGroup.toBuyList.controllers;
 
-
 import com.tblGroup.toBuyList.dto.CreditRequest1DTO;
 import com.tblGroup.toBuyList.dto.CreditRequest2DTO;
 import com.tblGroup.toBuyList.models.Credit;
 import com.tblGroup.toBuyList.models.Enum.TitleCreditOffer;
 import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.CreditService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.List;
-
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/credit")
 public class CreditController {
+	private static final Logger log = LoggerFactory.getLogger(CreditController.class);
 	private final CreditService creditService;
 	private final ClientService clientService;
 	
@@ -30,7 +30,6 @@ public class CreditController {
 	
 	
 	//	CREDIT MANAGEMENT------------------------------------------------------------------------------------------------------------------------------------------------------
-	
 	@PostMapping(path = "create/toMoneyAccount/{clientSenderID}", consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> makeCreditToMoneyAccount(@PathVariable int clientSenderID, @RequestParam TitleCreditOffer creditOfferTitle, @RequestBody CreditRequest1DTO creditRequest1DTO, @RequestParam String password){
 		try {
@@ -38,10 +37,10 @@ public class CreditController {
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -56,7 +55,7 @@ public class CreditController {
 			
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		}catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -74,10 +73,10 @@ public class CreditController {
 			
 			return new ResponseEntity<>(credit, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -89,10 +88,10 @@ public class CreditController {
 			
 			return new ResponseEntity<>(creditList, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

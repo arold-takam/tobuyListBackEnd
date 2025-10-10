@@ -4,10 +4,11 @@ import com.tblGroup.toBuyList.dto.RefundRequestByMoneyAccountDTO;
 import com.tblGroup.toBuyList.dto.RefundRequestByWalletDTO;
 import com.tblGroup.toBuyList.models.Refund;
 import com.tblGroup.toBuyList.services.RefundService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/refund", produces = APPLICATION_JSON_VALUE)
 public class RefundController {
+	private static final Logger log = LoggerFactory.getLogger(RefundController.class);
 	
 	private final RefundService refundService;
 	
@@ -72,10 +74,10 @@ public class RefundController {
 		try {
 			return supplier.get();
 		} catch (IllegalArgumentException e) {
-			System.out.println("Not found: " + e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(NOT_FOUND);
 		} catch (Exception e) {
-			System.out.println("Bad request: " + e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(BAD_REQUEST);
 		}
 	}

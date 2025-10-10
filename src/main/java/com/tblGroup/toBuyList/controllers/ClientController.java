@@ -1,10 +1,8 @@
 package com.tblGroup.toBuyList.controllers;
 
-
 import com.tblGroup.toBuyList.dto.ClientDTO;
 import com.tblGroup.toBuyList.dto.LoginRequestDTO;
 import com.tblGroup.toBuyList.models.Client;
-import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.models.Wallet;
 import com.tblGroup.toBuyList.services.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +10,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import org.springframework.data.crossstore.ChangeSetPersister;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +32,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/client")
 public class ClientController {
 	private final ClientService clientService;
+	private static final Logger log = LoggerFactory.getLogger(ClientController.class);
 	
 	private final AuthenticationManager authenticationManager;
 	
@@ -51,7 +51,7 @@ public class ClientController {
 			
 			return new ResponseEntity<>(savedClient, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -71,7 +71,7 @@ public class ClientController {
 		}catch (AuthenticationException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
 		}catch (Exception e){
-//			log.error(e.getMessage());
+			log.error(e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error; try again.");
 		}
 	}
@@ -83,7 +83,7 @@ public class ClientController {
 			Client foundClient = clientService.getClientById(clientID);
 			return new ResponseEntity<>(foundClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -102,10 +102,10 @@ public class ClientController {
 			Client updatedClient = clientService.updateClient(clientID, newClient);
 			return  new ResponseEntity<>(updatedClient, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -119,10 +119,10 @@ public class ClientController {
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 			
 		} catch (IllegalArgumentException e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}catch (Exception e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return ResponseEntity.badRequest().build();
 		}
 	}
@@ -138,10 +138,10 @@ public class ClientController {
 
 			return new ResponseEntity<>(wallet, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}

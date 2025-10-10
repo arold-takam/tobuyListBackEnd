@@ -10,12 +10,12 @@ import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.DepositService;
 import com.tblGroup.toBuyList.services.HistoryService;
 import com.tblGroup.toBuyList.services.TransferService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
@@ -23,6 +23,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/wallet", produces = APPLICATION_JSON_VALUE)
 public class WalletController {
     
+    private static final Logger log = LoggerFactory.getLogger(WalletController.class);
     private final TransferService transferService;
     private final DepositService depositService;
     private final HistoryService historyService;
@@ -36,7 +37,6 @@ public class WalletController {
     }
     
     // --- TRANSFER MANAGEMENT ------------------------------------------------------------
-    
     @PostMapping(path = "/transfer/account/{clientId}", consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> transferToAccount(@PathVariable int clientId, @RequestBody TransferDTO transfer, @RequestParam TypeTransfer type, @RequestParam String password) {
         return handle(() -> {
@@ -69,9 +69,7 @@ public class WalletController {
     @GetMapping(path = "/deposit/{clientId}")
     @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<Deposit> getDeposit(@PathVariable int clientId, @RequestParam int depositID) {
-        return handle(() -> {
-            return new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK);
-        });
+        return handle(() -> new ResponseEntity<>(depositService.getDeposit(clientId, depositID), OK));
     }
     
     @GetMapping(path = "/deposit/all/{clientId}")
@@ -89,9 +87,7 @@ public class WalletController {
     @PreAuthorize("@clientService.authentification(#clientId)")
     public ResponseEntity<List<HistoryResponse>> getHistory(@PathVariable int clientId) {
         return handle(
-                () ->{
-                    return ResponseEntity.ok(historyService.getHistory(clientId));
-                });
+                () -> ResponseEntity.ok(historyService.getHistory(clientId)));
     }
     
     @DeleteMapping(path = "/history/{clientId}")
@@ -109,10 +105,10 @@ public class WalletController {
         try {
             return supplier.get();
         } catch (IllegalArgumentException e) {
-            System.out.println("Not found: " + e.getMessage());
+           log.error(e.getMessage());
             return new ResponseEntity<>(NOT_FOUND);
         } catch (Exception e) {
-            System.out.println("Bad request: " + e.getMessage());
+            log.error(e.getMessage());
             return new ResponseEntity<>(BAD_REQUEST);
         }
     }
