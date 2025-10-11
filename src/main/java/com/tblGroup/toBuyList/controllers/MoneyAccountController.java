@@ -6,22 +6,21 @@ import com.tblGroup.toBuyList.dto.MoneyAccountResponseDTO;
 import com.tblGroup.toBuyList.dto.PasswordDTO;
 import com.tblGroup.toBuyList.models.Enum.MoneyAccountName;
 import com.tblGroup.toBuyList.models.MoneyAccount;
+import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping(path = "/moneyAccount")
 public class MoneyAccountController {
 	private final MoneyAccountService moneyAccountService;
-	
-	private static final Logger log = LoggerFactory.getLogger(MoneyAccountController.class);
 	
 	public MoneyAccountController(MoneyAccountService moneyAccountService) {
 		this.moneyAccountService = moneyAccountService;
@@ -34,13 +33,12 @@ public class MoneyAccountController {
 	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<MoneyAccount> createAccount(@PathVariable int clientID, @RequestParam MoneyAccountName moneyAccountName,  @RequestBody MoneyAccountDTO moneyAccount){
 		try {
-			//clientService.authentification(clientID);
 
 			MoneyAccount moneyAccountCreated = moneyAccountService.createAccount(clientID, moneyAccountName, moneyAccount);
 			
 			return new ResponseEntity<>(moneyAccountCreated, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -49,12 +47,11 @@ public class MoneyAccountController {
 	@PreAuthorize("@clientService.authentification(#clientID)")
 	public ResponseEntity<MoneyAccountResponseDTO>getAccount(@PathVariable int mAccountID, @PathVariable int clientID, @RequestParam String password){
 		try {
-			//clientService.authentification(clientID);
 			MoneyAccountResponseDTO moneyAccountResponseDTO = moneyAccountService.getAccountByID(clientID, mAccountID, password);
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -77,7 +74,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -105,10 +102,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -121,10 +118,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			System.out.println(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
