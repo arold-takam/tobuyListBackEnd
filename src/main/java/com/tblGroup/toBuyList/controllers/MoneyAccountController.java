@@ -8,6 +8,8 @@ import com.tblGroup.toBuyList.models.Enum.MoneyAccountName;
 import com.tblGroup.toBuyList.models.MoneyAccount;
 import com.tblGroup.toBuyList.services.ClientService;
 import com.tblGroup.toBuyList.services.MoneyAccountService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +22,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/moneyAccount")
 public class MoneyAccountController {
+	private static final Logger log = LoggerFactory.getLogger(MoneyAccountController.class);
 	private final MoneyAccountService moneyAccountService;
 	
 	public MoneyAccountController(MoneyAccountService moneyAccountService) {
@@ -38,7 +41,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccountCreated, HttpStatus.CREATED);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -51,7 +54,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccountResponseDTO, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -74,7 +77,7 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -102,10 +105,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -118,10 +121,10 @@ public class MoneyAccountController {
 			
 			return new ResponseEntity<>(moneyAccount, HttpStatus.OK);
 		}catch (IllegalArgumentException e){
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
